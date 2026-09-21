@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+  --color-primary: #334155;
+  --color-accent: #059669;
+  --color-background: #F8FAFC;
+  --color-foreground: #0F172A;
+  --color-muted: #F2F3F4;
+  --color-border: #E6E8EA;
+}
+
+body {
+  font-family: 'Open Sans', system-ui, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
+input, select, textarea {
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  ring: 2px solid var(--color-accent);
+}
