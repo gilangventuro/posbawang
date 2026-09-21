@@ -3,7 +3,7 @@ import './globals.css'
 import Sidebar from '@/components/Sidebar'
 
 export const metadata: Metadata = {
-  title: 'Pos Bawang - Manajemen Stok',
+  title: 'Rumah Bawang - Manajemen Stok',
   description: 'Aplikasi manajemen stok dan penjualan bawang',
 }
 

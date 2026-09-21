@@ -8,6 +8,7 @@ const defaultData: AppData = {
   stockMasuk: [],
   jasaKupas: [],
   penjualan: [],
+  modalAwal: 0,
 }
 
 export function getData(): AppData {
@@ -72,6 +73,12 @@ export function tambahPenjualan(item: Omit<Penjualan, 'id' | 'createdAt'>) {
   return newItem
 }
 
+export function setModalAwal(nominal: number) {
+  const data = getData()
+  data.modalAwal = nominal
+  saveData(data)
+}
+
 export function hapusPenjualan(id: string) {
   const data = getData()
   data.penjualan = data.penjualan.filter(i => i.id !== id)
@@ -99,12 +106,17 @@ export function hitungRingkasan(): RingkasanKeuangan {
   const stokBawangMentah = Math.max(0, totalBeliKg - totalKupasKg - totalJualTidakKupasKg)
   const stokBawangKupas = Math.max(0, totalKupasKg - totalJualKupasKg)
 
+  const modalAwal = data.modalAwal ?? 0
+  const saldoAkhir = modalAwal + keuntungan
+
   return {
+    modalAwal,
     totalPembelian,
     totalJasaKupas,
     totalPengeluaran,
     totalPendapatan,
     keuntungan,
+    saldoAkhir,
     stokBawangMentah,
     stokBawangKupas,
   }

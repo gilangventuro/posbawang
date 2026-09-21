@@ -25,7 +25,7 @@ export default function Sidebar() {
             </svg>
           </div>
           <div>
-            <p className="text-white font-semibold text-sm leading-none">Pos Bawang</p>
+            <p className="text-white font-semibold text-sm leading-none">Rumah Bawang</p>
             <p className="text-slate-400 text-xs mt-0.5">Manajemen Stok</p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-slate-700">
-        <p className="text-slate-500 text-xs text-center">© 2024 Pos Bawang</p>
+        <p className="text-slate-500 text-xs text-center">© 2024 Rumah Bawang</p>
       </div>
     </aside>
   )

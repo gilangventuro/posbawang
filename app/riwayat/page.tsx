@@ -31,7 +31,7 @@ export default function RiwayatPage() {
         id: i.id,
         tanggal: i.tanggal,
         kategori: 'pembelian' as TabType,
-        deskripsi: `Beli bawang ${i.berat_kg} kg @ ${formatRupiah(i.harga_per_kg)}/kg`,
+        deskripsi: `Beli ${i.jenis_item === 'bawang_putih' ? 'bawang putih' : 'bawang merah'} ${i.berat_kg} kg @ ${formatRupiah(i.harga_per_kg)}/kg`,
         berat: i.berat_kg,
         jumlah: i.total_harga,
         tipe: 'keluar' as const,

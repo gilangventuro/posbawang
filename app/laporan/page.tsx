@@ -2,16 +2,18 @@
 
 import { useState, useEffect } from 'react'
 import PageHeader from '@/components/PageHeader'
-import { hitungRingkasan, getData } from '@/lib/store'
+import { hitungRingkasan, getData, setModalAwal } from '@/lib/store'
 import { formatRupiah, formatKg } from '@/lib/utils'
 import { RingkasanKeuangan } from '@/lib/types'
 
 export default function LaporanPage() {
   const [ringkasan, setRingkasan] = useState<RingkasanKeuangan | null>(null)
+  const [editModal, setEditModal] = useState(false)
+  const [inputModal, setInputModal] = useState('')
   const [totalTransaksi, setTotalTransaksi] = useState({ beli: 0, kupas: 0, jual: 0 })
   const [penjualanPerJenis, setPenjualanPerJenis] = useState({ kupas: { berat: 0, nominal: 0 }, tidak_kupas: { berat: 0, nominal: 0 } })
 
-  useEffect(() => {
+  const loadData = () => {
     const r = hitungRingkasan()
     setRingkasan(r)
 
@@ -34,6 +36,21 @@ export default function LaporanPage() {
         nominal: jualTidakKupas.reduce((s, i) => s + i.total_harga, 0),
       },
     })
+  }
+
+  const handleSimpanModal = () => {
+    const nilai = parseFloat(inputModal.replace(/\./g, '').replace(',', '.'))
+    if (!isNaN(nilai) && nilai >= 0) {
+      setModalAwal(nilai)
+      loadData()
+    }
+    setEditModal(false)
+    setInputModal('')
+  }
+
+  useEffect(() => {
+    loadData()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   if (!ringkasan) return null
@@ -171,6 +188,53 @@ export default function LaporanPage() {
         </div>
       </div>
 
+      {/* Modal Awal */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Modal Awal</p>
+            {editModal ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  autoFocus
+                  placeholder="contoh: 5000000"
+                  value={inputModal}
+                  onChange={e => setInputModal(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleSimpanModal(); if (e.key === 'Escape') { setEditModal(false); setInputModal('') } }}
+                  className="w-44 px-3 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                />
+                <button onClick={handleSimpanModal} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition cursor-pointer">Simpan</button>
+                <button onClick={() => { setEditModal(false); setInputModal('') }} className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-200 transition cursor-pointer">Batal</button>
+              </div>
+            ) : (
+              <p className="text-2xl font-bold text-slate-800">{formatRupiah(ringkasan.modalAwal)}</p>
+            )}
+          </div>
+          {!editModal && (
+            <button
+              onClick={() => { setEditModal(true); setInputModal(String(ringkasan.modalAwal)) }}
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition cursor-pointer"
+              title="Ubah modal awal"
+            >
+              <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {ringkasan.modalAwal > 0 && (
+          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
+            <span className="text-xs text-slate-500">Saldo Akhir (Modal Awal + Keuntungan Bersih)</span>
+            <span className={`text-base font-bold ${ringkasan.saldoAkhir >= ringkasan.modalAwal ? 'text-emerald-700' : 'text-red-600'}`}>
+              {formatRupiah(ringkasan.saldoAkhir)}
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Ringkasan tabel */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100">
@@ -178,6 +242,12 @@ export default function LaporanPage() {
         </div>
         <table className="w-full text-sm">
           <tbody>
+            {ringkasan.modalAwal > 0 && (
+              <tr className="border-b border-slate-50 bg-slate-50">
+                <td className="px-6 py-3.5 text-slate-600">Modal Awal</td>
+                <td className="px-6 py-3.5 text-right font-semibold text-slate-700">{formatRupiah(ringkasan.modalAwal)}</td>
+              </tr>
+            )}
             <tr className="border-b border-slate-50 hover:bg-slate-50">
               <td className="px-6 py-3.5 text-slate-600">Pendapatan Bawang Tidak Kupas</td>
               <td className="px-6 py-3.5 text-right font-semibold text-emerald-700">+ {formatRupiah(penjualanPerJenis.tidak_kupas.nominal)}</td>
@@ -208,6 +278,14 @@ export default function LaporanPage() {
                 {formatRupiah(ringkasan.keuntungan)}
               </td>
             </tr>
+            {ringkasan.modalAwal > 0 && (
+              <tr className="bg-slate-800">
+                <td className="px-6 py-4 font-bold text-white text-base">Saldo Akhir</td>
+                <td className={`px-6 py-4 text-right font-bold text-xl ${ringkasan.saldoAkhir >= ringkasan.modalAwal ? 'text-emerald-300' : 'text-red-300'}`}>
+                  {formatRupiah(ringkasan.saldoAkhir)}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
