@@ -3,23 +3,23 @@
 import { useState, useEffect } from 'react'
 import PageHeader from '@/components/PageHeader'
 import FormCard from '@/components/FormCard'
-import { tambahPenyalur, hapusPenyalur, getData } from '@/lib/store'
+import { tambahReseller, hapusReseller, getData } from '@/lib/store'
 import { formatRupiah, formatKg, formatTanggal } from '@/lib/utils'
-import { Penyalur } from '@/lib/types'
+import { Reseller } from '@/lib/types'
 
 const FEE_PRESETS = [3000, 5000, 7000, 10000]
 
-export default function PenyalurPage() {
-  const [list, setList] = useState<Penyalur[]>([])
+export default function ResellerPage() {
+  const [list, setList] = useState<Reseller[]>([])
   const [tanggal, setTanggal] = useState(new Date().toISOString().split('T')[0])
-  const [namaPenyalur, setNamaPenyalur] = useState('')
+  const [namaReseller, setNamaReseller] = useState('')
   const [beratKg, setBeratKg] = useState('')
   const [feePerKg, setFeePerKg] = useState('')
   const [catatan, setCatatan] = useState('')
   const [loading, setLoading] = useState(false)
   const [sukses, setSukses] = useState(false)
 
-  const loadData = () => setList([...getData().penyalur].reverse())
+  const loadData = () => setList([...getData().reseller].reverse())
 
   useEffect(() => { loadData() }, [])
 
@@ -29,19 +29,19 @@ export default function PenyalurPage() {
     e.preventDefault()
     const berat = parseFloat(beratKg)
     const fee = parseFloat(feePerKg)
-    if (!namaPenyalur.trim() || !berat || berat <= 0 || !fee || fee <= 0) return
+    if (!namaReseller.trim() || !berat || berat <= 0 || !fee || fee <= 0) return
 
     setLoading(true)
-    tambahPenyalur({
+    tambahReseller({
       tanggal,
-      nama_penyalur: namaPenyalur.trim(),
+      nama_reseller: namaReseller.trim(),
       berat_kg: berat,
       fee_per_kg: fee,
       total_fee: berat * fee,
       catatan,
     })
     loadData()
-    setNamaPenyalur('')
+    setNamaReseller('')
     setBeratKg('')
     setFeePerKg('')
     setCatatan('')
@@ -51,19 +51,19 @@ export default function PenyalurPage() {
   }
 
   const handleHapus = (id: string) => {
-    hapusPenyalur(id)
+    hapusReseller(id)
     loadData()
   }
 
-  const isValid = namaPenyalur.trim() && parseFloat(beratKg) > 0 && parseFloat(feePerKg) > 0
+  const isValid = namaReseller.trim() && parseFloat(beratKg) > 0 && parseFloat(feePerKg) > 0
 
   return (
     <div>
-      <PageHeader title="Penyalur" description="Catat fee pihak ketiga sebagai penyalur bawang" />
+      <PageHeader title="Reseller" description="Catat fee pihak ketiga sebagai reseller bawang" />
 
-      <FormCard title="Catat Fee Penyalur" description="Fee penyalur dihitung sebagai pengeluaran">
+      <FormCard title="Catat Fee Reseller" description="Fee reseller dihitung sebagai pengeluaran">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-1.5">Tanggal</label>
               <input
@@ -74,18 +74,18 @@ export default function PenyalurPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-1.5">Nama Penyalur</label>
+              <label className="block text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-1.5">Nama Reseller</label>
               <input
                 type="text"
                 placeholder="contoh: Pak Budi"
-                value={namaPenyalur}
-                onChange={e => setNamaPenyalur(e.target.value)}
+                value={namaReseller}
+                onChange={e => setNamaReseller(e.target.value)}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-1.5">Berat (kg)</label>
               <input
@@ -131,7 +131,7 @@ export default function PenyalurPage() {
           {/* Total preview */}
           {totalFee > 0 && (
             <div className="flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl">
-              <span className="text-sm text-red-700 dark:text-red-300 font-medium">Total Fee Penyalur</span>
+              <span className="text-sm text-red-700 dark:text-red-300 font-medium">Total Fee Reseller</span>
               <span className="text-lg font-bold text-red-700 dark:text-red-300">{formatRupiah(totalFee)}</span>
             </div>
           )}
@@ -152,7 +152,7 @@ export default function PenyalurPage() {
               <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">Fee penyalur berhasil dicatat</p>
+              <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">Fee reseller berhasil dicatat</p>
             </div>
           )}
 
@@ -161,7 +161,7 @@ export default function PenyalurPage() {
             disabled={!isValid || loading}
             className="w-full py-2.5 rounded-xl text-sm font-semibold text-white bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
           >
-            {loading ? 'Menyimpan...' : 'Simpan Fee Penyalur'}
+            {loading ? 'Menyimpan...' : 'Simpan Fee Reseller'}
           </button>
         </form>
       </FormCard>
@@ -169,14 +169,14 @@ export default function PenyalurPage() {
       {/* Riwayat */}
       {list.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">Riwayat Fee Penyalur</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">Riwayat Fee Reseller</h3>
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
                   <tr>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Tanggal</th>
-                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Penyalur</th>
+                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Reseller</th>
                     <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Berat</th>
                     <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Fee/kg</th>
                     <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Total Fee</th>
@@ -188,7 +188,7 @@ export default function PenyalurPage() {
                     <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                       <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatTanggal(item.tanggal)}</td>
                       <td className="px-5 py-3.5">
-                        <p className="text-slate-800 dark:text-white font-medium">{item.nama_penyalur}</p>
+                        <p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>
                         {item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}
                       </td>
                       <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>

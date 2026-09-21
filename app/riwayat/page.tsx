@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader'
 import { getData } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg } from '@/lib/utils'
 
-type TabType = 'semua' | 'pembelian' | 'jasa_kupas' | 'penjualan' | 'penyalur'
+type TabType = 'semua' | 'pembelian' | 'jasa_kupas' | 'penjualan' | 'reseller'
 
 interface TransaksiItem {
   id: string
@@ -60,11 +60,11 @@ export default function RiwayatPage() {
         catatan: i.catatan,
         createdAt: i.createdAt,
       })),
-      ...(data.penyalur ?? []).map(i => ({
+      ...(data.reseller ?? []).map(i => ({
         id: i.id,
         tanggal: i.tanggal,
-        kategori: 'penyalur' as TabType,
-        deskripsi: `Fee penyalur ${i.nama_penyalur} — ${formatKg(i.berat_kg)} @ ${formatRupiah(i.fee_per_kg)}/kg`,
+        kategori: 'reseller' as TabType,
+        deskripsi: `Fee reseller ${i.nama_reseller} — ${formatKg(i.berat_kg)} @ ${formatRupiah(i.fee_per_kg)}/kg`,
         berat: i.berat_kg,
         jumlah: i.total_fee,
         tipe: 'keluar' as const,
@@ -87,20 +87,20 @@ export default function RiwayatPage() {
     { key: 'pembelian', label: 'Pembelian', count: items.filter(i => i.kategori === 'pembelian').length },
     { key: 'jasa_kupas', label: 'Jasa Kupas', count: items.filter(i => i.kategori === 'jasa_kupas').length },
     { key: 'penjualan', label: 'Penjualan', count: items.filter(i => i.kategori === 'penjualan').length },
-    { key: 'penyalur', label: 'Penyalur', count: items.filter(i => i.kategori === 'penyalur').length },
+    { key: 'reseller', label: 'Reseller', count: items.filter(i => i.kategori === 'reseller').length },
   ]
 
   const kategoriConfig: Record<TabType, { label: string; color: string }> = {
     pembelian: { label: 'Pembelian', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
     jasa_kupas: { label: 'Jasa Kupas', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
     penjualan: { label: 'Penjualan', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-    penyalur: { label: 'Penyalur', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
+    reseller: { label: 'Reseller', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
     semua: { label: '', color: '' },
   }
 
   return (
     <div>
-      <PageHeader title="Riwayat Transaksi" description="Semua catatan pembelian, jasa kupas, penjualan, dan fee penyalur" />
+      <PageHeader title="Riwayat Transaksi" description="Semua catatan pembelian, jasa kupas, penjualan, dan fee reseller" />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-xl p-1 mb-5">

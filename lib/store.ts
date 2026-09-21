@@ -1,6 +1,6 @@
 'use client'
 
-import { AppData, StockMasuk, JasaKupas, Penjualan, Penyalur, RingkasanKeuangan } from './types'
+import { AppData, StockMasuk, JasaKupas, Penjualan, Reseller, RingkasanKeuangan } from './types'
 
 const STORAGE_KEY = 'posbawang_data'
 
@@ -8,7 +8,7 @@ const defaultData: AppData = {
   stockMasuk: [],
   jasaKupas: [],
   penjualan: [],
-  penyalur: [],
+  reseller: [],
   modalAwal: 0,
 }
 
@@ -18,6 +18,14 @@ export function getData(): AppData {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultData
     const parsed = JSON.parse(raw)
+    // migrate old 'penyalur' field to 'reseller'
+    if (parsed.penyalur && !parsed.reseller) {
+      parsed.reseller = parsed.penyalur.map((i: Reseller & { nama_penyalur?: string }) => ({
+        ...i,
+        nama_reseller: i.nama_reseller ?? i.nama_penyalur ?? '',
+      }))
+      delete parsed.penyalur
+    }
     return { ...defaultData, ...parsed }
   } catch {
     return defaultData
@@ -70,17 +78,17 @@ export function hapusPenjualan(id: string) {
   saveData(data)
 }
 
-export function tambahPenyalur(item: Omit<Penyalur, 'id' | 'createdAt'>) {
+export function tambahReseller(item: Omit<Reseller, 'id' | 'createdAt'>) {
   const data = getData()
-  const newItem: Penyalur = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
-  data.penyalur.push(newItem)
+  const newItem: Reseller = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
+  data.reseller.push(newItem)
   saveData(data)
   return newItem
 }
 
-export function hapusPenyalur(id: string) {
+export function hapusReseller(id: string) {
   const data = getData()
-  data.penyalur = data.penyalur.filter(i => i.id !== id)
+  data.reseller = data.reseller.filter(i => i.id !== id)
   saveData(data)
 }
 
@@ -95,8 +103,8 @@ export function hitungRingkasan(): RingkasanKeuangan {
 
   const totalPembelian = data.stockMasuk.reduce((s, i) => s + i.total_harga, 0)
   const totalJasaKupas = data.jasaKupas.reduce((s, i) => s + i.total_biaya, 0)
-  const totalPenyalur = (data.penyalur ?? []).reduce((s, i) => s + i.total_fee, 0)
-  const totalPengeluaran = totalPembelian + totalJasaKupas + totalPenyalur
+  const totalReseller = (data.reseller ?? []).reduce((s, i) => s + i.total_fee, 0)
+  const totalPengeluaran = totalPembelian + totalJasaKupas + totalReseller
   const totalPendapatan = data.penjualan.reduce((s, i) => s + i.total_harga, 0)
   const keuntungan = totalPendapatan - totalPengeluaran
 
@@ -111,5 +119,5 @@ export function hitungRingkasan(): RingkasanKeuangan {
   const modalAwal = data.modalAwal ?? 0
   const saldoAkhir = modalAwal + keuntungan
 
-  return { modalAwal, totalPembelian, totalJasaKupas, totalPenyalur, totalPengeluaran, totalPendapatan, keuntungan, saldoAkhir, stokBawangMentah, stokBawangKupas }
+  return { modalAwal, totalPembelian, totalJasaKupas, totalReseller, totalPengeluaran, totalPendapatan, keuntungan, saldoAkhir, stokBawangMentah, stokBawangKupas }
 }

@@ -86,8 +86,8 @@ export default function PenjualanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="col-span-1 lg:col-span-2">
           <FormCard title="Form Penjualan" description="Input data penjualan bawang">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -178,7 +178,7 @@ export default function PenjualanPage() {
           </FormCard>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-1 lg:col-span-3">
           <FormCard title={`Riwayat Penjualan (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (

@@ -13,7 +13,7 @@ export default function Dashboard() {
     modalAwal: 0,
     totalPembelian: 0,
     totalJasaKupas: 0,
-    totalPenyalur: 0,
+    totalReseller: 0,
     totalPengeluaran: 0,
     totalPendapatan: 0,
     keuntungan: 0,
@@ -83,7 +83,7 @@ export default function Dashboard() {
             <div>
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wide">Modal Awal</p>
               {editModal ? (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <input
                     type="number"
                     min="0"
@@ -93,7 +93,7 @@ export default function Dashboard() {
                     value={inputModal}
                     onChange={e => setInputModal(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleSimpanModal(); if (e.key === 'Escape') { setEditModal(false); setInputModal('') } }}
-                    className="w-40 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-sm text-slate-800 dark:text-white dark:bg-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                    className="w-36 min-w-0 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-sm text-slate-800 dark:text-white dark:bg-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
                   />
                   <button onClick={handleSimpanModal} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition cursor-pointer">Simpan</button>
                   <button onClick={() => { setEditModal(false); setInputModal('') }} className="px-3 py-1.5 bg-slate-100 text-slate-600 dark:text-slate-200 text-xs font-semibold rounded-lg hover:bg-slate-200 transition cursor-pointer">Batal</button>
@@ -135,7 +135,7 @@ export default function Dashboard() {
           <StatCard
             title="Total Pengeluaran"
             value={formatRupiah(ringkasan.totalPengeluaran)}
-            subtitle={`Beli: ${formatRupiah(ringkasan.totalPembelian)} + Kupas: ${formatRupiah(ringkasan.totalJasaKupas)} + Penyalur: ${formatRupiah(ringkasan.totalPenyalur)}`}
+            subtitle={`Beli: ${formatRupiah(ringkasan.totalPembelian)} + Kupas: ${formatRupiah(ringkasan.totalJasaKupas)} + Reseller: ${formatRupiah(ringkasan.totalReseller)}`}
             color="red"
             icon="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
           />

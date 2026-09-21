@@ -56,8 +56,8 @@ export default function JasaKupasPage() {
     <div>
       <PageHeader title="Jasa Kupas" description="Catat biaya jasa pengupasan bawang" />
 
-      <div className="grid grid-cols-5 gap-6">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="col-span-1 lg:col-span-2">
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-2xl px-5 py-4 mb-4">
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Stok Bawang Mentah Tersedia</p>
             <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 mt-1">{formatKg(stokMentah)}</p>
@@ -168,7 +168,7 @@ export default function JasaKupasPage() {
           </FormCard>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-1 lg:col-span-3">
           <FormCard title={`Riwayat Jasa Kupas (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (
