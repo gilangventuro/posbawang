@@ -13,6 +13,7 @@ export default function Dashboard() {
     modalAwal: 0,
     totalPembelian: 0,
     totalJasaKupas: 0,
+    totalPenyalur: 0,
     totalPengeluaran: 0,
     totalPendapatan: 0,
     keuntungan: 0,
@@ -134,7 +135,7 @@ export default function Dashboard() {
           <StatCard
             title="Total Pengeluaran"
             value={formatRupiah(ringkasan.totalPengeluaran)}
-            subtitle={`Beli: ${formatRupiah(ringkasan.totalPembelian)} + Kupas: ${formatRupiah(ringkasan.totalJasaKupas)}`}
+            subtitle={`Beli: ${formatRupiah(ringkasan.totalPembelian)} + Kupas: ${formatRupiah(ringkasan.totalJasaKupas)} + Penyalur: ${formatRupiah(ringkasan.totalPenyalur)}`}
             color="red"
             icon="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
           />

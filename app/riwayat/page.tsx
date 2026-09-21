@@ -5,7 +5,7 @@ import PageHeader from '@/components/PageHeader'
 import { getData } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg } from '@/lib/utils'
 
-type TabType = 'semua' | 'pembelian' | 'jasa_kupas' | 'penjualan'
+type TabType = 'semua' | 'pembelian' | 'jasa_kupas' | 'penjualan' | 'penyalur'
 
 interface TransaksiItem {
   id: string
@@ -60,6 +60,17 @@ export default function RiwayatPage() {
         catatan: i.catatan,
         createdAt: i.createdAt,
       })),
+      ...(data.penyalur ?? []).map(i => ({
+        id: i.id,
+        tanggal: i.tanggal,
+        kategori: 'penyalur' as TabType,
+        deskripsi: `Fee penyalur ${i.nama_penyalur} — ${formatKg(i.berat_kg)} @ ${formatRupiah(i.fee_per_kg)}/kg`,
+        berat: i.berat_kg,
+        jumlah: i.total_fee,
+        tipe: 'keluar' as const,
+        catatan: i.catatan,
+        createdAt: i.createdAt,
+      })),
     ]
     semua.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     setItems(semua)
@@ -76,18 +87,20 @@ export default function RiwayatPage() {
     { key: 'pembelian', label: 'Pembelian', count: items.filter(i => i.kategori === 'pembelian').length },
     { key: 'jasa_kupas', label: 'Jasa Kupas', count: items.filter(i => i.kategori === 'jasa_kupas').length },
     { key: 'penjualan', label: 'Penjualan', count: items.filter(i => i.kategori === 'penjualan').length },
+    { key: 'penyalur', label: 'Penyalur', count: items.filter(i => i.kategori === 'penyalur').length },
   ]
 
-  const kategoriConfig = {
-    pembelian: { label: 'Pembelian', color: 'bg-blue-100 text-blue-700' },
-    jasa_kupas: { label: 'Jasa Kupas', color: 'bg-amber-100 text-amber-700' },
-    penjualan: { label: 'Penjualan', color: 'bg-emerald-100 text-emerald-700' },
+  const kategoriConfig: Record<TabType, { label: string; color: string }> = {
+    pembelian: { label: 'Pembelian', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+    jasa_kupas: { label: 'Jasa Kupas', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+    penjualan: { label: 'Penjualan', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+    penyalur: { label: 'Penyalur', color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
     semua: { label: '', color: '' },
   }
 
   return (
     <div>
-      <PageHeader title="Riwayat Transaksi" description="Semua catatan pembelian, jasa kupas, dan penjualan" />
+      <PageHeader title="Riwayat Transaksi" description="Semua catatan pembelian, jasa kupas, penjualan, dan fee penyalur" />
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-xl p-1 mb-5">
@@ -95,7 +108,7 @@ export default function RiwayatPage() {
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer ${
               tab === t.key
                 ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -158,11 +171,11 @@ export default function RiwayatPage() {
                       <p>{item.deskripsi}</p>
                       {item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}
                     </td>
-                    <td className={`px-5 py-3.5 text-right font-semibold whitespace-nowrap ${item.tipe === 'masuk' ? 'text-emerald-700' : 'text-red-600'}`}>
+                    <td className={`px-5 py-3.5 text-right font-semibold whitespace-nowrap ${item.tipe === 'masuk' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
                       {item.tipe === 'masuk' ? '+' : '-'} {formatRupiah(item.jumlah)}
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.tipe === 'masuk' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.tipe === 'masuk' ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                         {item.tipe === 'masuk' ? 'Pendapatan' : 'Pengeluaran'}
                       </span>
                     </td>

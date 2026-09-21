@@ -36,10 +36,22 @@ export interface Penjualan {
   createdAt: string
 }
 
+export interface Penyalur {
+  id: string
+  tanggal: string
+  nama_penyalur: string
+  berat_kg: number
+  fee_per_kg: number
+  total_fee: number
+  catatan: string
+  createdAt: string
+}
+
 export interface AppData {
   stockMasuk: StockMasuk[]
   jasaKupas: JasaKupas[]
   penjualan: Penjualan[]
+  penyalur: Penyalur[]
   modalAwal: number
 }
 
@@ -47,6 +59,7 @@ export interface RingkasanKeuangan {
   modalAwal: number
   totalPembelian: number
   totalJasaKupas: number
+  totalPenyalur: number
   totalPengeluaran: number
   totalPendapatan: number
   keuntungan: number

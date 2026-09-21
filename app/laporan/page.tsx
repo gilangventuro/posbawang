@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import PageHeader from '@/components/PageHeader'
 import { hitungRingkasan, getData, setModalAwal } from '@/lib/store'
 import { formatRupiah, formatKg } from '@/lib/utils'
-import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan } from '@/lib/types'
+import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Penyalur } from '@/lib/types'
 
 interface RekapHarian {
   tanggal: string
   stockMasuk: StockMasuk[]
   jasaKupas: JasaKupas[]
   penjualan: Penjualan[]
+  penyalur: Penyalur[]
   totalPendapatan: number
   totalPengeluaran: number
   keuntunganHarian: number
@@ -25,7 +26,7 @@ export default function LaporanPage() {
   const [ringkasan, setRingkasan] = useState<RingkasanKeuangan | null>(null)
   const [editModal, setEditModal] = useState(false)
   const [inputModal, setInputModal] = useState('')
-  const [totalTransaksi, setTotalTransaksi] = useState({ beli: 0, kupas: 0, jual: 0 })
+  const [totalTransaksi, setTotalTransaksi] = useState({ beli: 0, kupas: 0, jual: 0, penyalur: 0 })
   const [penjualanPerJenis, setPenjualanPerJenis] = useState({ kupas: { berat: 0, nominal: 0 }, tidak_kupas: { berat: 0, nominal: 0 } })
   const [rekapHarian, setRekapHarian] = useState<RekapHarian[]>([])
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
@@ -39,6 +40,7 @@ export default function LaporanPage() {
       beli: data.stockMasuk.length,
       kupas: data.jasaKupas.length,
       jual: data.penjualan.length,
+      penyalur: (data.penyalur ?? []).length,
     })
 
     const jualKupas = data.penjualan.filter(i => i.jenis === 'kupas')
@@ -59,6 +61,7 @@ export default function LaporanPage() {
     data.stockMasuk.forEach(i => dateSet.add(i.tanggal))
     data.jasaKupas.forEach(i => dateSet.add(i.tanggal))
     data.penjualan.forEach(i => dateSet.add(i.tanggal))
+    ;(data.penyalur ?? []).forEach(i => dateSet.add(i.tanggal))
 
     const rekap: RekapHarian[] = Array.from(dateSet)
       .sort((a, b) => b.localeCompare(a))
@@ -66,9 +69,10 @@ export default function LaporanPage() {
         const sm = data.stockMasuk.filter(i => i.tanggal === tanggal)
         const jk = data.jasaKupas.filter(i => i.tanggal === tanggal)
         const pj = data.penjualan.filter(i => i.tanggal === tanggal)
+        const py = (data.penyalur ?? []).filter(i => i.tanggal === tanggal)
         const totalPendapatan = pj.reduce((s, i) => s + i.total_harga, 0)
-        const totalPengeluaran = sm.reduce((s, i) => s + i.total_harga, 0) + jk.reduce((s, i) => s + i.total_biaya, 0)
-        return { tanggal, stockMasuk: sm, jasaKupas: jk, penjualan: pj, totalPendapatan, totalPengeluaran, keuntunganHarian: totalPendapatan - totalPengeluaran }
+        const totalPengeluaran = sm.reduce((s, i) => s + i.total_harga, 0) + jk.reduce((s, i) => s + i.total_biaya, 0) + py.reduce((s, i) => s + i.total_fee, 0)
+        return { tanggal, stockMasuk: sm, jasaKupas: jk, penjualan: pj, penyalur: py, totalPendapatan, totalPengeluaran, keuntunganHarian: totalPendapatan - totalPengeluaran }
       })
     setRekapHarian(rekap)
   }
@@ -160,6 +164,14 @@ export default function LaporanPage() {
                 <span className="text-xs text-slate-400 dark:text-slate-300">({totalTransaksi.kupas}x)</span>
               </div>
               <span className="text-sm font-semibold text-slate-800 dark:text-white">{formatRupiah(ringkasan.totalJasaKupas)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-violet-500"></div>
+                <span className="text-sm text-slate-600 dark:text-slate-200">Fee Penyalur</span>
+                <span className="text-xs text-slate-400 dark:text-slate-300">({totalTransaksi.penyalur}x)</span>
+              </div>
+              <span className="text-sm font-semibold text-slate-800 dark:text-white">{formatRupiah(ringkasan.totalPenyalur)}</span>
             </div>
             <div className="border-t border-slate-100 dark:border-slate-700 pt-3 flex justify-between">
               <span className="text-sm font-semibold text-slate-700 dark:text-white">Total Pengeluaran</span>
@@ -296,6 +308,10 @@ export default function LaporanPage() {
               <td className="px-6 py-3.5 text-slate-600 dark:text-slate-200">Pengeluaran Jasa Kupas</td>
               <td className="px-6 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">- {formatRupiah(ringkasan.totalJasaKupas)}</td>
             </tr>
+            <tr className="border-b border-slate-50 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+              <td className="px-6 py-3.5 text-slate-600 dark:text-slate-200">Fee Penyalur</td>
+              <td className="px-6 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">- {formatRupiah(ringkasan.totalPenyalur)}</td>
+            </tr>
             <tr className="border-b border-slate-100 dark:border-slate-700 bg-red-50 dark:bg-red-900/30">
               <td className="px-6 py-3.5 font-semibold text-slate-700 dark:text-white">Total Pengeluaran</td>
               <td className="px-6 py-3.5 text-right font-bold text-red-600 dark:text-red-400">= {formatRupiah(ringkasan.totalPengeluaran)}</td>
@@ -429,6 +445,25 @@ export default function LaporanPage() {
                                     : <span className="text-slate-400 dark:text-slate-500">Rp 0</span>
                                   }
                                 </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Penyalur */}
+                      {hari.penyalur.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide mb-2">Fee Penyalur</p>
+                          <div className="space-y-2">
+                            {hari.penyalur.map(py => (
+                              <div key={py.id} className="flex items-start justify-between gap-4">
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                  {py.nama_penyalur} — {formatKg(py.berat_kg)}
+                                  <span className="text-slate-400 dark:text-slate-500"> @ {formatRupiah(py.fee_per_kg)}/kg</span>
+                                  {py.catatan && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{py.catatan}</span>}
+                                </span>
+                                <span className="text-sm font-semibold text-red-600 dark:text-red-400 flex-shrink-0">-{formatRupiah(py.total_fee)}</span>
                               </div>
                             ))}
                           </div>
