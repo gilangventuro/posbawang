@@ -4,7 +4,22 @@ import { useState, useEffect } from 'react'
 import PageHeader from '@/components/PageHeader'
 import { hitungRingkasan, getData, setModalAwal } from '@/lib/store'
 import { formatRupiah, formatKg } from '@/lib/utils'
-import { RingkasanKeuangan } from '@/lib/types'
+import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan } from '@/lib/types'
+
+interface RekapHarian {
+  tanggal: string
+  stockMasuk: StockMasuk[]
+  jasaKupas: JasaKupas[]
+  penjualan: Penjualan[]
+  totalPendapatan: number
+  totalPengeluaran: number
+  keuntunganHarian: number
+}
+
+function formatTanggalPanjang(tanggal: string) {
+  const date = new Date(tanggal + 'T00:00:00')
+  return date.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+}
 
 export default function LaporanPage() {
   const [ringkasan, setRingkasan] = useState<RingkasanKeuangan | null>(null)
@@ -12,6 +27,8 @@ export default function LaporanPage() {
   const [inputModal, setInputModal] = useState('')
   const [totalTransaksi, setTotalTransaksi] = useState({ beli: 0, kupas: 0, jual: 0 })
   const [penjualanPerJenis, setPenjualanPerJenis] = useState({ kupas: { berat: 0, nominal: 0 }, tidak_kupas: { berat: 0, nominal: 0 } })
+  const [rekapHarian, setRekapHarian] = useState<RekapHarian[]>([])
+  const [expandedDay, setExpandedDay] = useState<string | null>(null)
 
   const loadData = () => {
     const r = hitungRingkasan()
@@ -36,6 +53,24 @@ export default function LaporanPage() {
         nominal: jualTidakKupas.reduce((s, i) => s + i.total_harga, 0),
       },
     })
+
+    // Rekap harian — kumpulkan semua tanggal unik
+    const dateSet = new Set<string>()
+    data.stockMasuk.forEach(i => dateSet.add(i.tanggal))
+    data.jasaKupas.forEach(i => dateSet.add(i.tanggal))
+    data.penjualan.forEach(i => dateSet.add(i.tanggal))
+
+    const rekap: RekapHarian[] = Array.from(dateSet)
+      .sort((a, b) => b.localeCompare(a))
+      .map(tanggal => {
+        const sm = data.stockMasuk.filter(i => i.tanggal === tanggal)
+        const jk = data.jasaKupas.filter(i => i.tanggal === tanggal)
+        const pj = data.penjualan.filter(i => i.tanggal === tanggal)
+        const totalPendapatan = pj.reduce((s, i) => s + i.total_harga, 0)
+        const totalPengeluaran = sm.reduce((s, i) => s + i.total_harga, 0) + jk.reduce((s, i) => s + i.total_biaya, 0)
+        return { tanggal, stockMasuk: sm, jasaKupas: jk, penjualan: pj, totalPendapatan, totalPengeluaran, keuntunganHarian: totalPendapatan - totalPengeluaran }
+      })
+    setRekapHarian(rekap)
   }
 
   const handleSimpanModal = () => {
@@ -132,18 +167,11 @@ export default function LaporanPage() {
             </div>
           </div>
 
-          {/* Progress bar pengeluaran */}
           {ringkasan.totalPengeluaran > 0 && (
             <div className="mt-4">
               <div className="flex h-2.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
-                <div
-                  className="bg-blue-500 transition-all"
-                  style={{ width: `${(ringkasan.totalPembelian / ringkasan.totalPengeluaran) * 100}%` }}
-                />
-                <div
-                  className="bg-amber-400 transition-all"
-                  style={{ width: `${(ringkasan.totalJasaKupas / ringkasan.totalPengeluaran) * 100}%` }}
-                />
+                <div className="bg-blue-500 transition-all" style={{ width: `${(ringkasan.totalPembelian / ringkasan.totalPengeluaran) * 100}%` }} />
+                <div className="bg-amber-400 transition-all" style={{ width: `${(ringkasan.totalJasaKupas / ringkasan.totalPengeluaran) * 100}%` }} />
               </div>
               <div className="flex gap-4 mt-2">
                 <div className="flex items-center gap-1">
@@ -236,7 +264,7 @@ export default function LaporanPage() {
       </div>
 
       {/* Ringkasan tabel */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden mb-6">
         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Ringkasan Arus Kas</h3>
         </div>
@@ -288,6 +316,139 @@ export default function LaporanPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Rekap Harian */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Rekap Harian</h3>
+          <span className="text-xs text-slate-400 dark:text-slate-400">
+            {rekapHarian.length > 0 ? `${rekapHarian.length} hari dengan transaksi` : 'Belum ada transaksi'}
+          </span>
+        </div>
+
+        {rekapHarian.length === 0 ? (
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-10 text-center">
+            <p className="text-slate-400 dark:text-slate-500 text-sm">Belum ada transaksi yang tercatat</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {rekapHarian.map(hari => {
+              const isOpen = expandedDay === hari.tanggal
+              const hariUntung = hari.keuntunganHarian >= 0
+              const txCount = [
+                hari.penjualan.length > 0 && `${hari.penjualan.length} jual`,
+                hari.stockMasuk.length > 0 && `${hari.stockMasuk.length} beli`,
+                hari.jasaKupas.length > 0 && `${hari.jasaKupas.length} kupas`,
+              ].filter(Boolean).join(' · ')
+
+              return (
+                <div key={hari.tanggal} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  {/* Header row */}
+                  <button
+                    onClick={() => setExpandedDay(isOpen ? null : hari.tanggal)}
+                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer text-left"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{formatTanggalPanjang(hari.tanggal)}</p>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        {hari.totalPendapatan > 0 && (
+                          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">+{formatRupiah(hari.totalPendapatan)}</span>
+                        )}
+                        {hari.totalPengeluaran > 0 && (
+                          <span className="text-xs text-red-500 dark:text-red-400 font-medium">-{formatRupiah(hari.totalPengeluaran)}</span>
+                        )}
+                        <span className="text-xs text-slate-400 dark:text-slate-500">{txCount}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <span className={`text-sm font-bold ${hariUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {hariUntung && hari.keuntunganHarian !== 0 ? '+' : ''}{formatRupiah(hari.keuntunganHarian)}
+                      </span>
+                      <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </button>
+
+                  {/* Detail transaksi */}
+                  {isOpen && (
+                    <div className="border-t border-slate-100 dark:border-slate-700 px-5 py-4 space-y-5">
+                      {/* Penjualan */}
+                      {hari.penjualan.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-2">Penjualan</p>
+                          <div className="space-y-2">
+                            {hari.penjualan.map(pj => (
+                              <div key={pj.id} className="flex items-start justify-between gap-4">
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                  {formatKg(pj.berat_kg)} {pj.jenis === 'kupas' ? 'Bawang Kupas' : 'Bawang Mentah'}
+                                  <span className="text-slate-400 dark:text-slate-500"> @ {formatRupiah(pj.harga_jual_per_kg)}/kg</span>
+                                  {pj.catatan && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{pj.catatan}</span>}
+                                </span>
+                                <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-300 flex-shrink-0">+{formatRupiah(pj.total_harga)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Stock Masuk */}
+                      {hari.stockMasuk.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide mb-2">Pembelian Stok</p>
+                          <div className="space-y-2">
+                            {hari.stockMasuk.map(sm => (
+                              <div key={sm.id} className="flex items-start justify-between gap-4">
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                  {formatKg(sm.berat_kg)} {sm.jenis_item === 'bawang_putih' ? 'Bawang Putih' : 'Bawang Merah'}
+                                  <span className="text-slate-400 dark:text-slate-500"> @ {formatRupiah(sm.harga_per_kg)}/kg</span>
+                                  {sm.catatan && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{sm.catatan}</span>}
+                                </span>
+                                <span className="text-sm font-semibold text-red-600 dark:text-red-400 flex-shrink-0">-{formatRupiah(sm.total_harga)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Jasa Kupas */}
+                      {hari.jasaKupas.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wide mb-2">Jasa Kupas</p>
+                          <div className="space-y-2">
+                            {hari.jasaKupas.map(jk => (
+                              <div key={jk.id} className="flex items-start justify-between gap-4">
+                                <span className="text-sm text-slate-600 dark:text-slate-300">
+                                  {formatKg(jk.berat_kg)} {jk.tipe_kupas === 'sendiri' ? '(Kupas Sendiri — gratis)' : `@ ${formatRupiah(jk.biaya_per_kg)}/kg`}
+                                  {jk.catatan && <span className="block text-xs text-slate-400 dark:text-slate-500 mt-0.5">{jk.catatan}</span>}
+                                </span>
+                                <span className="text-sm font-semibold flex-shrink-0">
+                                  {jk.total_biaya > 0
+                                    ? <span className="text-red-600 dark:text-red-400">-{formatRupiah(jk.total_biaya)}</span>
+                                    : <span className="text-slate-400 dark:text-slate-500">Rp 0</span>
+                                  }
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Total hari */}
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                        <span className="text-xs text-slate-500 dark:text-slate-400">Total hari ini</span>
+                        <span className={`text-sm font-bold ${hariUntung ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>
+                          {hariUntung && hari.keuntunganHarian !== 0 ? '+' : ''}{formatRupiah(hari.keuntunganHarian)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )

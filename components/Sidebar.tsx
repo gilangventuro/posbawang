@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '@/lib/theme'
 
 const navItems = [
@@ -16,7 +16,14 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { theme, toggleTheme } = useTheme()
+
+  const handleLogout = () => {
+    document.cookie = 'rb_auth=; path=/; max-age=0'
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full w-60 flex flex-col z-40" style={{ background: 'linear-gradient(170deg, #B04B87 0%, #8B3A9E 50%, #6B2D8A 100%)' }}>
@@ -49,7 +56,7 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-white/10 space-y-3">
+      <div className="px-4 py-4 border-t border-white/10 space-y-2">
         <button
           onClick={toggleTheme}
           className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
@@ -62,7 +69,17 @@ export default function Sidebar() {
             {theme === 'dark' ? '☀️' : '🌙'}
           </span>
         </button>
-        <p className="text-white/40 text-xs text-center">© 2024 Rumah Bawang</p>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10 hover:bg-red-500/30 transition-colors cursor-pointer"
+          title="Keluar"
+        >
+          <span className="text-white/80 text-xs font-medium">Keluar</span>
+          <svg className="w-4 h-4 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+        <p className="text-white/40 text-xs text-center pt-1">© 2026 Rumah Bawang</p>
       </div>
     </aside>
   )
