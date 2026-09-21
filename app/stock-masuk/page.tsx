@@ -1,16 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PageHeader from '@/components/PageHeader'
 import FormCard from '@/components/FormCard'
 import { tambahStockMasuk, getData, hapusStockMasuk } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg, getTodayISO } from '@/lib/utils'
 import { StockMasuk, JenisItem } from '@/lib/types'
+import { simpanInvoice, bukaInvoice, formatUkuran } from '@/lib/invoices'
 
 export default function StockMasukPage() {
   const [list, setList] = useState<StockMasuk[]>([])
   const [form, setForm] = useState({ tanggal: getTodayISO(), jenis_item: 'bawang_putih' as JenisItem, berat_kg: '', harga_per_kg: '', catatan: '' })
+  const [notaFile, setNotaFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadData = () => setList([...getData().stockMasuk].reverse())
 
@@ -18,21 +22,38 @@ export default function StockMasukPage() {
 
   const totalHarga = (parseFloat(form.berat_kg) || 0) * (parseFloat(form.harga_per_kg) || 0)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.berat_kg || !form.harga_per_kg) return
-    tambahStockMasuk({
-      tanggal: form.tanggal,
-      jenis_item: form.jenis_item,
-      berat_kg: parseFloat(form.berat_kg),
-      harga_per_kg: parseFloat(form.harga_per_kg),
-      total_harga: totalHarga,
-      catatan: form.catatan,
-    })
-    setForm({ tanggal: getTodayISO(), jenis_item: form.jenis_item, berat_kg: '', harga_per_kg: '', catatan: '' })
-    setSuccess(true)
-    setTimeout(() => setSuccess(false), 3000)
-    loadData()
+
+    setUploading(true)
+    try {
+      let notaId: string | undefined
+      if (notaFile) {
+        const keterangan = `Nota Belanja — ${form.jenis_item === 'bawang_putih' ? 'Bawang Putih' : 'Bawang Merah'} ${form.berat_kg} kg, ${form.tanggal}`
+        const invoice = await simpanInvoice(notaFile, form.tanggal, keterangan)
+        notaId = invoice.id
+      }
+
+      tambahStockMasuk({
+        tanggal: form.tanggal,
+        jenis_item: form.jenis_item,
+        berat_kg: parseFloat(form.berat_kg),
+        harga_per_kg: parseFloat(form.harga_per_kg),
+        total_harga: totalHarga,
+        catatan: form.catatan,
+        notaId,
+      })
+
+      setForm({ tanggal: getTodayISO(), jenis_item: form.jenis_item, berat_kg: '', harga_per_kg: '', catatan: '' })
+      setNotaFile(null)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+      loadData()
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleHapus = (id: string) => {
@@ -129,11 +150,58 @@ export default function StockMasukPage() {
                 />
               </div>
 
+              {/* Nota Belanja */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Nota Belanja (opsional)</label>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full rounded-xl border-2 border-dashed px-4 py-3 cursor-pointer transition-colors ${
+                    notaFile
+                      ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-600'
+                      : 'border-slate-200 bg-slate-50 hover:border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:hover:border-slate-500'
+                  }`}
+                >
+                  {notaFile ? (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium truncate">{notaFile.name}</span>
+                      <span className="text-xs text-slate-400 flex-shrink-0">{formatUkuran(notaFile.size)}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      <span className="text-xs">Upload foto nota / PDF</span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={e => setNotaFile(e.target.files?.[0] ?? null)}
+                />
+                {notaFile && (
+                  <button
+                    type="button"
+                    onClick={() => { setNotaFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                    className="mt-1 text-xs text-red-500 hover:text-red-600 cursor-pointer"
+                  >
+                    Hapus nota
+                  </button>
+                )}
+              </div>
+
               <button
                 type="submit"
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors duration-150 cursor-pointer"
+                disabled={uploading}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold text-sm py-2.5 rounded-xl transition-colors duration-150 cursor-pointer"
               >
-                Simpan Pembelian
+                {uploading ? 'Menyimpan...' : 'Simpan Pembelian'}
               </button>
 
               {success && (
@@ -184,15 +252,28 @@ export default function StockMasukPage() {
                         <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
                         <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
                         <td className="py-3">
-                          <button
-                            onClick={() => handleHapus(item.id)}
-                            className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          <div className="flex items-center gap-1.5">
+                            {item.notaId && (
+                              <button
+                                onClick={() => bukaInvoice(item.notaId!)}
+                                className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer"
+                                title="Lihat Nota"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleHapus(item.id)}
+                              className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

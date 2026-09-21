@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PageHeader from '@/components/PageHeader'
 import { hitungRingkasan, getData, setModalAwal } from '@/lib/store'
-import { formatRupiah, formatKg } from '@/lib/utils'
+import { formatRupiah, formatKg, getTodayISO } from '@/lib/utils'
 import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Penyalur } from '@/lib/types'
+import { simpanInvoice, getSemuaInvoice, bukaInvoice, hapusInvoice, formatUkuran, Invoice } from '@/lib/invoices'
 
 interface RekapHarian {
   tanggal: string
@@ -30,6 +31,11 @@ export default function LaporanPage() {
   const [penjualanPerJenis, setPenjualanPerJenis] = useState({ kupas: { berat: 0, nominal: 0 }, tidak_kupas: { berat: 0, nominal: 0 } })
   const [rekapHarian, setRekapHarian] = useState<RekapHarian[]>([])
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [invoiceForm, setInvoiceForm] = useState({ tanggal: getTodayISO(), keterangan: '' })
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null)
+  const [uploadingInvoice, setUploadingInvoice] = useState(false)
+  const invoiceFileRef = useRef<HTMLInputElement>(null)
 
   const loadData = () => {
     const r = hitungRingkasan()
@@ -87,10 +93,37 @@ export default function LaporanPage() {
     setInputModal('')
   }
 
+  const loadInvoices = async () => {
+    const list = await getSemuaInvoice()
+    setInvoices(list)
+  }
+
   useEffect(() => {
     loadData()
+    loadInvoices()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const handleUploadInvoice = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!invoiceFile) return
+    setUploadingInvoice(true)
+    try {
+      await simpanInvoice(invoiceFile, invoiceForm.tanggal, invoiceForm.keterangan)
+      setInvoiceFile(null)
+      setInvoiceForm({ tanggal: getTodayISO(), keterangan: '' })
+      if (invoiceFileRef.current) invoiceFileRef.current.value = ''
+      await loadInvoices()
+    } finally {
+      setUploadingInvoice(false)
+    }
+  }
+
+  const handleHapusInvoice = async (id: string) => {
+    if (!confirm('Hapus invoice ini?')) return
+    await hapusInvoice(id)
+    await loadInvoices()
+  }
 
   if (!ringkasan) return null
 
@@ -484,6 +517,158 @@ export default function LaporanPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* Invoice & Bukti */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Invoice &amp; Bukti</h3>
+          <span className="text-xs text-slate-400 dark:text-slate-400">{invoices.length} file tersimpan</span>
+        </div>
+
+        <div className="grid grid-cols-5 gap-6">
+          {/* Upload form */}
+          <div className="col-span-2">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+              <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-4">Upload Bukti</h4>
+              <form onSubmit={handleUploadInvoice} className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Tanggal</label>
+                  <input
+                    type="date"
+                    value={invoiceForm.tanggal}
+                    onChange={e => setInvoiceForm({ ...invoiceForm, tanggal: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Keterangan (opsional)</label>
+                  <input
+                    type="text"
+                    placeholder="contoh: Faktur pembelian supplier A"
+                    value={invoiceForm.keterangan}
+                    onChange={e => setInvoiceForm({ ...invoiceForm, keterangan: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">File (gambar / PDF)</label>
+                  <div
+                    onClick={() => invoiceFileRef.current?.click()}
+                    className={`w-full rounded-xl border-2 border-dashed px-4 py-4 cursor-pointer transition-colors text-center ${
+                      invoiceFile
+                        ? 'border-purple-400 bg-purple-50 dark:bg-purple-900/20 dark:border-purple-600'
+                        : 'border-slate-200 bg-slate-50 hover:border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:hover:border-slate-500'
+                    }`}
+                  >
+                    {invoiceFile ? (
+                      <div>
+                        <svg className="w-6 h-6 mx-auto mb-1 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-xs text-purple-700 dark:text-purple-300 font-medium truncate">{invoiceFile.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{formatUkuran(invoiceFile.size)}</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <svg className="w-6 h-6 mx-auto mb-1 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Klik untuk pilih file</p>
+                        <p className="text-xs text-slate-300 dark:text-slate-600 mt-0.5">JPG, PNG, PDF</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={invoiceFileRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    className="hidden"
+                    onChange={e => setInvoiceFile(e.target.files?.[0] ?? null)}
+                  />
+                  {invoiceFile && (
+                    <button
+                      type="button"
+                      onClick={() => { setInvoiceFile(null); if (invoiceFileRef.current) invoiceFileRef.current.value = '' }}
+                      className="mt-1 text-xs text-red-500 hover:text-red-600 cursor-pointer"
+                    >
+                      Hapus file
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  disabled={!invoiceFile || uploadingInvoice}
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded-xl transition-colors cursor-pointer"
+                >
+                  {uploadingInvoice ? 'Menyimpan...' : 'Simpan Invoice'}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Invoice list */}
+          <div className="col-span-3">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              {invoices.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                  <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-sm">Belum ada invoice tersimpan</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-50 dark:divide-slate-700">
+                  {invoices.map(inv => {
+                    const isPdf = inv.tipe === 'application/pdf'
+                    return (
+                      <div key={inv.id} className="px-5 py-3.5 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isPdf ? 'bg-red-100 dark:bg-red-900/30' : 'bg-blue-100 dark:bg-blue-900/30'}`}>
+                          {isPdf ? (
+                            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{inv.nama}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-slate-400 dark:text-slate-500">{inv.tanggal}</span>
+                            {inv.keterangan && <span className="text-xs text-slate-500 dark:text-slate-400 truncate">· {inv.keterangan}</span>}
+                            <span className="text-xs text-slate-300 dark:text-slate-600">· {formatUkuran(inv.ukuran)}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          <button
+                            onClick={() => bukaInvoice(inv.id)}
+                            className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-medium transition cursor-pointer"
+                            title="Lihat"
+                          >
+                            Lihat
+                          </button>
+                          <button
+                            onClick={() => handleHapusInvoice(inv.id)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition cursor-pointer"
+                            title="Hapus"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )

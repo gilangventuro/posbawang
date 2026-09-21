@@ -9,6 +9,7 @@ export interface StockMasuk {
   harga_per_kg: number
   total_harga: number
   catatan: string
+  notaId?: string
   createdAt: string
 }
 
