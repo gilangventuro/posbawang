@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useTheme } from '@/lib/theme'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -14,20 +16,14 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { theme, toggleTheme } = useTheme()
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-60 bg-[#1e293b] flex flex-col z-40">
-      <div className="px-6 py-6 border-b border-slate-700">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#059669] flex items-center justify-center">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
-          <div>
-            <p className="text-white font-semibold text-sm leading-none">Rumah Bawang</p>
-            <p className="text-slate-400 text-xs mt-0.5">Manajemen Stok</p>
-          </div>
+    <aside className="fixed left-0 top-0 h-full w-60 flex flex-col z-40" style={{ background: 'linear-gradient(170deg, #B04B87 0%, #8B3A9E 50%, #6B2D8A 100%)' }}>
+      <div className="px-6 py-6 border-b border-white/10">
+        <div className="flex flex-col items-center gap-1">
+          <Image src="/logo.png" alt="Rumah Bawang" width={160} height={72} className="object-contain" priority />
+          <p className="text-white/50 text-xs">Manajemen Stok</p>
         </div>
       </div>
 
@@ -40,11 +36,11 @@ export default function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? 'bg-[#059669] text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                  ? 'bg-white/20 text-white shadow-sm border border-white/30'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
             >
-              <svg className="w-4.5 h-4.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 18, height: 18 }}>
+              <svg className="flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 18, height: 18 }}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d={item.icon} />
               </svg>
               {item.label}
@@ -53,8 +49,20 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-slate-700">
-        <p className="text-slate-500 text-xs text-center">© 2024 Rumah Bawang</p>
+      <div className="px-4 py-4 border-t border-white/10 space-y-3">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+          title={theme === 'dark' ? 'Ganti ke Light Mode' : 'Ganti ke Dark Mode'}
+        >
+          <span className="text-white/80 text-xs font-medium">
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </span>
+          <span className="text-lg">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </span>
+        </button>
+        <p className="text-white/40 text-xs text-center">© 2024 Rumah Bawang</p>
       </div>
     </aside>
   )

@@ -62,26 +62,26 @@ export default function PenjualanPage() {
 
       {/* Stok banner */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
           <div>
-            <p className="text-xs text-blue-600 font-medium">Stok Bawang Mentah</p>
-            <p className="text-base font-bold text-blue-800">{formatKg(stok.mentah)}</p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Stok Bawang Mentah</p>
+            <p className="text-base font-bold text-blue-800 dark:text-blue-200">{formatKg(stok.mentah)}</p>
           </div>
         </div>
-        <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-100 dark:border-orange-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-800 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
           <div>
-            <p className="text-xs text-orange-600 font-medium">Stok Bawang Kupas</p>
-            <p className="text-base font-bold text-orange-800">{formatKg(stok.kupas)}</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Stok Bawang Kupas</p>
+            <p className="text-base font-bold text-orange-800 dark:text-orange-200">{formatKg(stok.kupas)}</p>
           </div>
         </div>
       </div>
@@ -91,33 +91,33 @@ export default function PenjualanPage() {
           <FormCard title="Form Penjualan" description="Input data penjualan bawang">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Tanggal</label>
                 <input
                   type="date"
                   value={form.tanggal}
                   onChange={e => setForm({ ...form, tanggal: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Jenis Bawang</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Jenis Bawang</label>
                 <select
                   value={form.jenis}
                   onChange={e => setForm({ ...form, jenis: e.target.value as JenisBawang })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition cursor-pointer"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition cursor-pointer"
                 >
                   <option value="tidak_kupas">Bawang Tidak Kupas</option>
                   <option value="kupas">Bawang Kupas</option>
                 </select>
-                <p className="text-xs text-slate-400 mt-1">
-                  Stok tersedia: <span className="font-semibold text-slate-600">{formatKg(stokTersedia)}</span>
+                <p className="text-xs text-slate-400 dark:text-slate-300 mt-1">
+                  Stok tersedia: <span className="font-semibold text-slate-600 dark:text-slate-200">{formatKg(stokTersedia)}</span>
                 </p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Berat Dijual (kg)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Berat Dijual (kg)</label>
                 <input
                   type="number"
                   min="0"
@@ -125,13 +125,13 @@ export default function PenjualanPage() {
                   placeholder="contoh: 20"
                   value={form.berat_kg}
                   onChange={e => setForm({ ...form, berat_kg: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Harga Jual per kg (Rp)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Harga Jual per kg (Rp)</label>
                 <input
                   type="number"
                   min="0"
@@ -139,26 +139,26 @@ export default function PenjualanPage() {
                   placeholder="contoh: 20000"
                   value={form.harga_jual_per_kg}
                   onChange={e => setForm({ ...form, harga_jual_per_kg: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
                   required
                 />
               </div>
 
               {totalHarga > 0 && (
-                <div className="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
-                  <p className="text-xs text-emerald-600 font-medium">Total Pendapatan</p>
-                  <p className="text-lg font-bold text-emerald-700 mt-0.5">{formatRupiah(totalHarga)}</p>
+                <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-xl px-4 py-3">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Total Pendapatan</p>
+                  <p className="text-lg font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{formatRupiah(totalHarga)}</p>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Catatan (opsional)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Catatan (opsional)</label>
                 <textarea
                   placeholder="Nama pembeli, dll."
                   value={form.catatan}
                   onChange={e => setForm({ ...form, catatan: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none"
                 />
               </div>
 
@@ -170,7 +170,7 @@ export default function PenjualanPage() {
               </button>
 
               {success && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-emerald-700 text-sm font-medium text-center">
+                <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 rounded-xl px-4 py-3 text-emerald-700 dark:text-emerald-300 text-sm font-medium text-center">
                   Data berhasil disimpan!
                 </div>
               )}
@@ -191,19 +191,19 @@ export default function PenjualanPage() {
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left text-xs font-semibold text-slate-500 pb-3 pr-4">Tanggal</th>
-                      <th className="text-left text-xs font-semibold text-slate-500 pb-3 pr-4">Jenis</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Berat</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Harga/kg</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Total</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-700">
+                      <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-200 pb-3 pr-4">Tanggal</th>
+                      <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-200 pb-3 pr-4">Jenis</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-200 pb-3 pr-4">Berat</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-200 pb-3 pr-4">Harga/kg</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-200 pb-3 pr-4">Total</th>
                       <th className="pb-3"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                     {list.map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 pr-4 text-slate-700">{formatTanggal(item.tanggal)}</td>
+                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td className="py-3 pr-4 text-slate-700 dark:text-white">{formatTanggal(item.tanggal)}</td>
                         <td className="py-3 pr-4">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             item.jenis === 'kupas'
@@ -213,13 +213,13 @@ export default function PenjualanPage() {
                             {item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-right font-medium text-slate-800">{formatKg(item.berat_kg)}</td>
-                        <td className="py-3 pr-4 text-right text-slate-600">{formatRupiah(item.harga_jual_per_kg)}</td>
-                        <td className="py-3 pr-4 text-right font-semibold text-emerald-700">{formatRupiah(item.total_harga)}</td>
+                        <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-white">{formatKg(item.berat_kg)}</td>
+                        <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>
+                        <td className="py-3 pr-4 text-right font-semibold text-emerald-700 dark:text-emerald-300">{formatRupiah(item.total_harga)}</td>
                         <td className="py-3">
                           <button
                             onClick={() => handleHapus(item.id)}
-                            className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                            className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
                             title="Hapus"
                           >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,9 +231,9 @@ export default function PenjualanPage() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-slate-200">
-                      <td colSpan={4} className="pt-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Pendapatan</td>
-                      <td className="pt-3 text-right font-bold text-emerald-700">
+                    <tr className="border-t-2 border-slate-200 dark:border-slate-700">
+                      <td colSpan={4} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Total Pendapatan</td>
+                      <td className="pt-3 text-right font-bold text-emerald-700 dark:text-emerald-300">
                         {formatRupiah(list.reduce((s, i) => s + i.total_harga, 0))}
                       </td>
                       <td></td>

@@ -7,19 +7,19 @@ interface StatCardProps {
 }
 
 const colorMap = {
-  green: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  red: 'bg-red-50 text-red-700 border-red-100',
-  blue: 'bg-blue-50 text-blue-700 border-blue-100',
-  orange: 'bg-orange-50 text-orange-700 border-orange-100',
-  slate: 'bg-slate-50 text-slate-700 border-slate-200',
+  green: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-800',
+  red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-100 dark:border-red-800',
+  blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-800',
+  orange: 'bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-100 dark:border-orange-800',
+  slate: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700',
 }
 
 const iconBg = {
-  green: 'bg-emerald-100 text-emerald-600',
-  red: 'bg-red-100 text-red-600',
-  blue: 'bg-blue-100 text-blue-600',
-  orange: 'bg-orange-100 text-orange-600',
-  slate: 'bg-slate-100 text-slate-600',
+  green: 'bg-emerald-100 dark:bg-emerald-800 text-emerald-600 dark:text-emerald-300',
+  red: 'bg-red-100 dark:bg-red-800 text-red-600 dark:text-red-300',
+  blue: 'bg-blue-100 dark:bg-blue-800 text-blue-600 dark:text-blue-300',
+  orange: 'bg-orange-100 dark:bg-orange-800 text-orange-600 dark:text-orange-300',
+  slate: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
 }
 
 export default function StatCard({ title, value, subtitle, color = 'slate', icon }: StatCardProps) {

@@ -51,18 +51,18 @@ export default function StockMasukPage() {
           <FormCard title="Form Pembelian Bawang" description="Input data stok masuk">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Tanggal</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Tanggal</label>
                 <input
                   type="date"
                   value={form.tanggal}
                   onChange={e => setForm({ ...form, tanggal: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Jenis Item</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Jenis Item</label>
                 <div className="grid grid-cols-2 gap-2">
                   {(['bawang_putih', 'bawang_merah'] as JenisItem[]).map(j => (
                     <button
@@ -74,7 +74,7 @@ export default function StockMasukPage() {
                           ? j === 'bawang_putih'
                             ? 'bg-purple-600 border-purple-600 text-white'
                             : 'bg-red-500 border-red-500 text-white'
-                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
                       }`}
                     >
                       {j === 'bawang_putih' ? 'Bawang Putih' : 'Bawang Merah'}
@@ -84,7 +84,7 @@ export default function StockMasukPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Berat (kg)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Berat (kg)</label>
                 <input
                   type="number"
                   min="0"
@@ -92,13 +92,13 @@ export default function StockMasukPage() {
                   placeholder="contoh: 100"
                   value={form.berat_kg}
                   onChange={e => setForm({ ...form, berat_kg: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Harga Beli per kg (Rp)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Harga Beli per kg (Rp)</label>
                 <input
                   type="number"
                   min="0"
@@ -106,26 +106,26 @@ export default function StockMasukPage() {
                   placeholder="contoh: 15000"
                   value={form.harga_per_kg}
                   onChange={e => setForm({ ...form, harga_per_kg: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
                   required
                 />
               </div>
 
               {totalHarga > 0 && (
-                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                  <p className="text-xs text-blue-600 font-medium">Total Pembelian</p>
-                  <p className="text-lg font-bold text-blue-700 mt-0.5">{formatRupiah(totalHarga)}</p>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 dark:bg-blue-900/30 dark:border-blue-800">
+                  <p className="text-xs text-blue-600 dark:text-blue-300 font-medium">Total Pembelian</p>
+                  <p className="text-lg font-bold text-blue-700 dark:text-blue-200 mt-0.5">{formatRupiah(totalHarga)}</p>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Catatan (opsional)</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Catatan (opsional)</label>
                 <textarea
                   placeholder="Nama supplier, dll."
                   value={form.catatan}
                   onChange={e => setForm({ ...form, catatan: e.target.value })}
                   rows={2}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition resize-none dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
               </div>
 
@@ -137,7 +137,7 @@ export default function StockMasukPage() {
               </button>
 
               {success && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-emerald-700 text-sm font-medium text-center">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-emerald-700 text-sm font-medium text-center dark:bg-emerald-900/30 dark:border-emerald-700 dark:text-emerald-300">
                   Data berhasil disimpan!
                 </div>
               )}
@@ -149,7 +149,7 @@ export default function StockMasukPage() {
           <FormCard title={`Riwayat Pembelian (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
+                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                   </svg>
@@ -158,19 +158,19 @@ export default function StockMasukPage() {
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left text-xs font-semibold text-slate-500 pb-3 pr-4">Tanggal</th>
-                      <th className="text-left text-xs font-semibold text-slate-500 pb-3 pr-4">Jenis</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Berat</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Harga/kg</th>
-                      <th className="text-right text-xs font-semibold text-slate-500 pb-3 pr-4">Total</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-700">
+                      <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Tanggal</th>
+                      <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Jenis</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Berat</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Harga/kg</th>
+                      <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Total</th>
                       <th className="pb-3"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                     {list.map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-3 pr-4 text-slate-700">{formatTanggal(item.tanggal)}</td>
+                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td className="py-3 pr-4 text-slate-700 dark:text-slate-200">{formatTanggal(item.tanggal)}</td>
                         <td className="py-3 pr-4">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                             item.jenis_item === 'bawang_putih'
@@ -180,9 +180,9 @@ export default function StockMasukPage() {
                             {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-right font-medium text-slate-800">{formatKg(item.berat_kg)}</td>
-                        <td className="py-3 pr-4 text-right text-slate-600">{formatRupiah(item.harga_per_kg)}</td>
-                        <td className="py-3 pr-4 text-right font-semibold text-blue-700">{formatRupiah(item.total_harga)}</td>
+                        <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
+                        <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
+                        <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
                         <td className="py-3">
                           <button
                             onClick={() => handleHapus(item.id)}
@@ -198,9 +198,9 @@ export default function StockMasukPage() {
                     ))}
                   </tbody>
                   <tfoot>
-                    <tr className="border-t-2 border-slate-200">
-                      <td colSpan={4} className="pt-3 text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</td>
-                      <td className="pt-3 text-right font-bold text-blue-700">
+                    <tr className="border-t-2 border-slate-200 dark:border-slate-700">
+                      <td colSpan={4} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</td>
+                      <td className="pt-3 text-right font-bold text-blue-700 dark:text-blue-200">
                         {formatRupiah(list.reduce((s, i) => s + i.total_harga, 0))}
                       </td>
                       <td></td>

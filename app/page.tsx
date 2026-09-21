@@ -53,7 +53,7 @@ export default function Dashboard() {
 
       {/* Stok Cards */}
       <section className="mb-8">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Stok Saat Ini</h2>
+        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wider mb-3">Stok Saat Ini</h2>
         <div className="grid grid-cols-2 gap-4">
           <StatCard
             title="Bawang Mentah"
@@ -74,13 +74,13 @@ export default function Dashboard() {
 
       {/* Keuangan Cards */}
       <section className="mb-8">
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Ringkasan Keuangan</h2>
+        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wider mb-3">Ringkasan Keuangan</h2>
 
         {/* Modal Awal */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 mb-4">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 mb-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Modal Awal</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wide">Modal Awal</p>
               {editModal ? (
                 <div className="flex items-center gap-2 mt-1">
                   <input
@@ -92,13 +92,13 @@ export default function Dashboard() {
                     value={inputModal}
                     onChange={e => setInputModal(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleSimpanModal(); if (e.key === 'Escape') { setEditModal(false); setInputModal('') } }}
-                    className="w-40 px-3 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-800 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
+                    className="w-40 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 text-sm text-slate-800 dark:text-white dark:bg-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition"
                   />
                   <button onClick={handleSimpanModal} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 transition cursor-pointer">Simpan</button>
-                  <button onClick={() => { setEditModal(false); setInputModal('') }} className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg hover:bg-slate-200 transition cursor-pointer">Batal</button>
+                  <button onClick={() => { setEditModal(false); setInputModal('') }} className="px-3 py-1.5 bg-slate-100 text-slate-600 dark:text-slate-200 text-xs font-semibold rounded-lg hover:bg-slate-200 transition cursor-pointer">Batal</button>
                 </div>
               ) : (
-                <p className="text-xl font-bold text-slate-800 mt-1">{formatRupiah(ringkasan.modalAwal)}</p>
+                <p className="text-xl font-bold text-slate-800 dark:text-white mt-1">{formatRupiah(ringkasan.modalAwal)}</p>
               )}
             </div>
             {!editModal && (
@@ -107,15 +107,15 @@ export default function Dashboard() {
                 className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition cursor-pointer"
                 title="Ubah modal awal"
               >
-                <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 text-slate-600 dark:text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
               </button>
             )}
           </div>
           {ringkasan.modalAwal > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
-              <span className="text-xs text-slate-500">Saldo Akhir (Modal + Keuntungan)</span>
+            <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+              <span className="text-xs text-slate-500 dark:text-slate-300">Saldo Akhir (Modal + Keuntungan)</span>
               <span className={`text-sm font-bold ${ringkasan.saldoAkhir >= ringkasan.modalAwal ? 'text-emerald-700' : 'text-red-600'}`}>
                 {formatRupiah(ringkasan.saldoAkhir)}
               </span>
@@ -139,14 +139,14 @@ export default function Dashboard() {
             icon="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </div>
-        <div className={`rounded-2xl border p-5 ${ringkasan.keuntungan >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+        <div className={`rounded-2xl border p-5 ${ringkasan.keuntungan >= 0 ? 'bg-emerald-50 border-emerald-100 dark:bg-emerald-900/30 dark:border-emerald-800' : 'bg-red-50 border-red-100 dark:bg-red-900/30 dark:border-red-800'}`}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Keuntungan Bersih</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-200">Keuntungan Bersih</p>
               <p className={`text-3xl font-bold mt-1 ${ringkasan.keuntungan >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                 {formatRupiah(ringkasan.keuntungan)}
               </p>
-              <p className="text-xs text-slate-500 mt-1">Pendapatan - Pengeluaran</p>
+              <p className="text-xs text-slate-500 dark:text-slate-300 mt-1">Pendapatan - Pengeluaran</p>
             </div>
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${ringkasan.keuntungan >= 0 ? 'bg-emerald-100' : 'bg-red-100'}`}>
               <svg className={`w-7 h-7 ${ringkasan.keuntungan >= 0 ? 'text-emerald-600' : 'text-red-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,13 +159,13 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <section>
-        <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Aksi Cepat</h2>
+        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wider mb-3">Aksi Cepat</h2>
         <div className="grid grid-cols-2 gap-3">
           {quickActions.map(action => (
             <Link
               key={action.href}
               href={action.href}
-              className="flex items-center gap-3 bg-white rounded-xl border border-slate-200 p-4 hover:border-slate-300 hover:shadow-sm transition-all duration-150 cursor-pointer"
+              className="flex items-center gap-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm transition-all duration-150 cursor-pointer"
             >
               <div className={`w-9 h-9 rounded-xl ${action.color} flex items-center justify-center flex-shrink-0`}>
                 <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: 18, height: 18 }}>
@@ -173,8 +173,8 @@ export default function Dashboard() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">{action.label}</p>
-                <p className="text-xs text-slate-500">{action.desc}</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">{action.label}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-300">{action.desc}</p>
               </div>
             </Link>
           ))}

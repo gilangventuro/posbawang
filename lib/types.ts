@@ -12,9 +12,12 @@ export interface StockMasuk {
   createdAt: string
 }
 
+export type TipeKupas = 'jasa' | 'sendiri'
+
 export interface JasaKupas {
   id: string
   tanggal: string
+  tipe_kupas: TipeKupas
   berat_kg: number
   biaya_per_kg: number
   total_biaya: number
