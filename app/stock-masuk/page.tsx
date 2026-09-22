@@ -66,6 +66,9 @@ export default function StockMasukPage() {
     }
   }
 
+  const grouped = list.reduce((acc, item) => { if (!acc[item.tanggal]) acc[item.tanggal] = []; acc[item.tanggal].push(item); return acc }, {} as Record<string, StockMasuk[]>)
+  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+
   return (
     <div>
       <PageHeader title="Stock Masuk" description="Catat pembelian bawang mentah" />
@@ -232,7 +235,6 @@ export default function StockMasukPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-100 dark:border-slate-700">
-                      <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Tanggal</th>
                       <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Jenis</th>
                       <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Berat</th>
                       <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 pb-3 pr-4">Harga/kg</th>
@@ -241,53 +243,62 @@ export default function StockMasukPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                    {list.map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                        <td className="py-3 pr-4 text-slate-700 dark:text-slate-200">{formatTanggal(item.tanggal)}</td>
-                        <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            item.jenis_item === 'bawang_putih'
-                              ? 'bg-purple-100 text-purple-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}>
-                            {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
-                          </span>
-                        </td>
-                        <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
-                        <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
-                        <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
-                        <td className="py-3">
-                          <div className="flex items-center gap-1.5">
-                            {item.notaId && (
-                              <button
-                                onClick={() => bukaInvoice(item.notaId!)}
-                                className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer"
-                                title="Lihat Nota"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              </button>
-                            )}
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleHapus(item.id)}
-                                className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
-                                title="Hapus"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            )}
+                    {sortedDates.flatMap((date, idx) => [
+                      <tr key={`d-${date}`}>
+                        <td colSpan={5} className={`pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-1'}`}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
+                            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
                           </div>
                         </td>
-                      </tr>
-                    ))}
+                      </tr>,
+                      ...grouped[date].map(item => (
+                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                          <td className="py-3 pr-4">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              item.jenis_item === 'bawang_putih'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
+                            </span>
+                          </td>
+                          <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
+                          <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
+                          <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-1.5">
+                              {item.notaId && (
+                                <button
+                                  onClick={() => bukaInvoice(item.notaId!)}
+                                  className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer"
+                                  title="Lihat Nota"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </button>
+                              )}
+                              {isAdmin && (
+                                <button
+                                  onClick={() => handleHapus(item.id)}
+                                  className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ])}
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-slate-200 dark:border-slate-700">
-                      <td colSpan={4} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</td>
+                      <td colSpan={3} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</td>
                       <td className="pt-3 text-right font-bold text-blue-700 dark:text-blue-200">
                         {formatRupiah(list.reduce((s, i) => s + i.total_harga, 0))}
                       </td>

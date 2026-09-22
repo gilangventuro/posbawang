@@ -60,6 +60,9 @@ export default function ResellerPage() {
 
   const isValid = namaReseller.trim() && parseFloat(beratKg) > 0 && parseFloat(feePerKg) > 0
 
+  const grouped = list.reduce((acc, item) => { if (!acc[item.tanggal]) acc[item.tanggal] = []; acc[item.tanggal].push(item); return acc }, {} as Record<string, Reseller[]>)
+  const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+
   return (
     <div>
       <PageHeader title="Reseller" description="Catat fee pihak ketiga sebagai reseller bawang" />
@@ -178,7 +181,6 @@ export default function ResellerPage() {
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
                   <tr>
-                    <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Tanggal</th>
                     <th className="text-left text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Reseller</th>
                     <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Berat</th>
                     <th className="text-right text-xs font-semibold text-slate-500 dark:text-slate-400 px-5 py-3">Fee/kg</th>
@@ -187,35 +189,44 @@ export default function ResellerPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                  {list.map(item => (
-                    <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                      <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{formatTanggal(item.tanggal)}</td>
-                      <td className="px-5 py-3.5">
-                        <p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>
-                        {item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}
+                  {sortedDates.flatMap((date, idx) => [
+                    <tr key={`d-${date}`}>
+                      <td colSpan={5} className={`px-5 pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-2'}`}>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
+                          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>
-                      <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
-                      <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
-                      <td className="px-5 py-3.5 text-right">
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleHapus(item.id)}
-                            className="text-slate-400 hover:text-red-500 transition cursor-pointer"
-                            title="Hapus"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                    </tr>,
+                    ...grouped[date].map(item => (
+                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>
+                          {item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}
+                        </td>
+                        <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>
+                        <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
+                        <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
+                        <td className="px-5 py-3.5 text-right">
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleHapus(item.id)}
+                              className="text-slate-400 hover:text-red-500 transition cursor-pointer"
+                              title="Hapus"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ])}
                 </tbody>
                 <tfoot className="bg-slate-50 dark:bg-slate-700 border-t border-slate-200 dark:border-slate-600">
                   <tr>
-                    <td colSpan={4} className="px-5 py-3 text-sm font-semibold text-slate-700 dark:text-white">Total</td>
+                    <td colSpan={3} className="px-5 py-3 text-sm font-semibold text-slate-700 dark:text-white">Total</td>
                     <td className="px-5 py-3 text-right font-bold text-red-600 dark:text-red-400">
                       -{formatRupiah(list.reduce((s, i) => s + i.total_fee, 0))}
                     </td>
