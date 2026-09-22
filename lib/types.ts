@@ -68,3 +68,17 @@ export interface RingkasanKeuangan {
   stokBawangMentah: number
   stokBawangKupas: number
 }
+
+export interface SnapshotLaporan {
+  id: string
+  judul: string
+  catatan: string
+  tanggalSimpan: string
+  ringkasan: RingkasanKeuangan
+  totalTransaksi: {
+    beli: number
+    kupas: number
+    jual: number
+    reseller: number
+  }
+}

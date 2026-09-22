@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from '@/lib/theme'
 import { useState } from 'react'
+import { useRole, doLogout } from '@/lib/auth'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -21,9 +22,10 @@ export default function Sidebar() {
   const router = useRouter()
   const { theme, toggleTheme } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
+  const { role, isViewer } = useRole()
 
   const handleLogout = () => {
-    document.cookie = 'rb_auth=; path=/; max-age=0'
+    doLogout()
     router.push('/login')
     router.refresh()
   }
@@ -66,6 +68,13 @@ export default function Sidebar() {
           <div className="flex flex-col items-center gap-1 flex-1">
             <Image src="/logo.png" alt="Rumah Bawang" width={160} height={72} className="object-contain" priority />
             <p className="text-white/50 text-xs">Manajemen Stok</p>
+            <span className={`mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+              isViewer
+                ? 'bg-yellow-400/20 text-yellow-200 border border-yellow-400/30'
+                : 'bg-white/20 text-white/90 border border-white/20'
+            }`}>
+              {role === 'admin' ? 'Admin' : 'Viewer'}
+            </span>
           </div>
           {/* Close button — mobile only */}
           <button

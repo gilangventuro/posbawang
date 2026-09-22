@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 import PageHeader from '@/components/PageHeader'
-import { hitungRingkasan, getData, setModalAwal } from '@/lib/store'
+import { hitungRingkasan, getData, setModalAwal, getSnapshots, simpanSnapshot, hapusSnapshot, exportDataJSON, importDataJSON } from '@/lib/store'
 import { formatRupiah, formatKg, getTodayISO } from '@/lib/utils'
-import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Reseller } from '@/lib/types'
+import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Reseller, SnapshotLaporan } from '@/lib/types'
 import { simpanInvoice, getSemuaInvoice, bukaInvoice, hapusInvoice, formatUkuran, Invoice } from '@/lib/invoices'
+import { useRole } from '@/lib/auth'
 
 interface RekapHarian {
   tanggal: string
@@ -36,6 +37,13 @@ export default function LaporanPage() {
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null)
   const [uploadingInvoice, setUploadingInvoice] = useState(false)
   const invoiceFileRef = useRef<HTMLInputElement>(null)
+  const importFileRef = useRef<HTMLInputElement>(null)
+
+  const [snapshots, setSnapshots] = useState<SnapshotLaporan[]>([])
+  const [snapForm, setSnapForm] = useState({ judul: '', catatan: '' })
+  const [snapSaved, setSnapSaved] = useState(false)
+
+  const { isAdmin } = useRole()
 
   const loadData = () => {
     const r = hitungRingkasan()
@@ -98,9 +106,12 @@ export default function LaporanPage() {
     setInvoices(list)
   }
 
+  const loadSnapshots = () => setSnapshots(getSnapshots())
+
   useEffect(() => {
     loadData()
     loadInvoices()
+    loadSnapshots()
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -123,6 +134,39 @@ export default function LaporanPage() {
     if (!confirm('Hapus invoice ini?')) return
     await hapusInvoice(id)
     await loadInvoices()
+  }
+
+  const handleSimpanSnapshot = () => {
+    if (!snapForm.judul.trim()) return
+    simpanSnapshot(snapForm.judul, snapForm.catatan)
+    setSnapForm({ judul: '', catatan: '' })
+    setSnapSaved(true)
+    setTimeout(() => setSnapSaved(false), 3000)
+    loadSnapshots()
+  }
+
+  const handleHapusSnapshot = (id: string) => {
+    if (!confirm('Hapus rekap laporan ini?')) return
+    hapusSnapshot(id)
+    loadSnapshots()
+  }
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const json = ev.target?.result as string
+      if (importDataJSON(json)) {
+        loadData()
+        loadSnapshots()
+        alert('Data berhasil diimport!')
+      } else {
+        alert('File tidak valid atau rusak.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
   }
 
   if (!ringkasan) return null
@@ -155,7 +199,7 @@ export default function LaporanPage() {
       </div>
 
       {/* Keuangan breakdown */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-200 uppercase tracking-wide">Total Pendapatan</p>
           <p className="text-xl font-bold text-emerald-700 dark:text-emerald-300 mt-1">{formatRupiah(ringkasan.totalPendapatan)}</p>
@@ -178,7 +222,7 @@ export default function LaporanPage() {
       </div>
 
       {/* Pengeluaran detail */}
-      <div className="grid grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
           <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-4">Rincian Pengeluaran</h3>
           <div className="space-y-3">
@@ -519,6 +563,177 @@ export default function LaporanPage() {
         )}
       </div>
 
+      {/* Rekap Laporan Tersimpan */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Rekap Laporan Tersimpan</h3>
+          <span className="text-xs text-slate-400">{snapshots.length} rekap</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Form simpan snapshot — hanya admin */}
+          {isAdmin && (
+            <div className="col-span-1 lg:col-span-2">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-4">Simpan Rekap Sekarang</h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Judul Rekap</label>
+                    <input
+                      type="text"
+                      placeholder="contoh: September 2026"
+                      value={snapForm.judul}
+                      onChange={e => setSnapForm({ ...snapForm, judul: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1.5">Catatan (opsional)</label>
+                    <input
+                      type="text"
+                      placeholder="Keterangan tambahan..."
+                      value={snapForm.catatan}
+                      onChange={e => setSnapForm({ ...snapForm, catatan: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm text-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100 dark:placeholder:text-slate-500"
+                    />
+                  </div>
+
+                  {/* Preview ringkasan saat ini */}
+                  {ringkasan && (
+                    <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3 space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">Pendapatan</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatRupiah(ringkasan.totalPendapatan)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500 dark:text-slate-400">Pengeluaran</span>
+                        <span className="font-semibold text-red-600 dark:text-red-400">{formatRupiah(ringkasan.totalPengeluaran)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-slate-200 dark:border-slate-600 pt-1 mt-1">
+                        <span className="font-semibold text-slate-700 dark:text-white">Keuntungan</span>
+                        <span className={`font-bold ${ringkasan.keuntungan >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>{formatRupiah(ringkasan.keuntungan)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleSimpanSnapshot}
+                    disabled={!snapForm.judul.trim()}
+                    className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm py-2.5 rounded-xl transition-colors cursor-pointer"
+                  >
+                    Simpan Rekap Laporan
+                  </button>
+
+                  {snapSaved && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                      <svg className="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">Rekap berhasil disimpan!</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Daftar snapshot */}
+          <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+              {snapshots.length === 0 ? (
+                <div className="text-center py-12 text-slate-400 dark:text-slate-500">
+                  <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <p className="text-sm">Belum ada rekap yang disimpan</p>
+                  {isAdmin && <p className="text-xs mt-1">Simpan rekap dari panel kiri</p>}
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-50 dark:divide-slate-700">
+                  {snapshots.map(snap => {
+                    const untung = snap.ringkasan.keuntungan >= 0
+                    return (
+                      <div key={snap.id} className="px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-white">{snap.judul}</p>
+                            {snap.catatan && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{snap.catatan}</p>}
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                              Disimpan {new Date(snap.tanggalSimpan).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleHapusSnapshot(snap.id)}
+                              className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition cursor-pointer flex-shrink-0"
+                              title="Hapus"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                          <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2">
+                            <p className="text-emerald-600 dark:text-emerald-400 font-medium">Pendapatan</p>
+                            <p className="font-bold text-emerald-700 dark:text-emerald-300 mt-0.5">{formatRupiah(snap.ringkasan.totalPendapatan)}</p>
+                          </div>
+                          <div className="bg-red-50 dark:bg-red-900/20 rounded-lg px-3 py-2">
+                            <p className="text-red-500 dark:text-red-400 font-medium">Pengeluaran</p>
+                            <p className="font-bold text-red-600 dark:text-red-400 mt-0.5">{formatRupiah(snap.ringkasan.totalPengeluaran)}</p>
+                          </div>
+                          <div className={`rounded-lg px-3 py-2 ${untung ? 'bg-purple-50 dark:bg-purple-900/20' : 'bg-orange-50 dark:bg-orange-900/20'}`}>
+                            <p className={`font-medium ${untung ? 'text-purple-600 dark:text-purple-400' : 'text-orange-600 dark:text-orange-400'}`}>Keuntungan</p>
+                            <p className={`font-bold mt-0.5 ${untung ? 'text-purple-700 dark:text-purple-300' : 'text-orange-700 dark:text-orange-300'}`}>{formatRupiah(snap.ringkasan.keuntungan)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Backup & Restore — hanya admin */}
+      {isAdmin && (
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Backup &amp; Restore Data</h3>
+          </div>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Download semua data sebagai file backup (.json) atau restore dari file backup sebelumnya.</p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={exportDataJSON}
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Backup
+              </button>
+              <button
+                onClick={() => importFileRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-xl transition cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import Backup
+              </button>
+              <input ref={importFileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+            </div>
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+              ⚠ Import akan menggantikan semua data yang ada. Pastikan sudah backup sebelum import.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Invoice & Bukti */}
       <div className="mt-8">
         <div className="flex items-center justify-between mb-3">
@@ -526,9 +741,9 @@ export default function LaporanPage() {
           <span className="text-xs text-slate-400 dark:text-slate-400">{invoices.length} file tersimpan</span>
         </div>
 
-        <div className="grid grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Upload form */}
-          <div className="col-span-2">
+          <div className="col-span-1 lg:col-span-2">
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
               <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide mb-4">Upload Bukti</h4>
               <form onSubmit={handleUploadInvoice} className="space-y-3">
@@ -609,7 +824,7 @@ export default function LaporanPage() {
           </div>
 
           {/* Invoice list */}
-          <div className="col-span-3">
+          <div className="col-span-1 lg:col-span-3">
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
               {invoices.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">

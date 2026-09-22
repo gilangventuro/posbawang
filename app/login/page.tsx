@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { checkLogin, doLogin } from '@/lib/auth'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')
@@ -18,8 +19,9 @@ export default function LoginPage() {
     setLoading(true)
 
     setTimeout(() => {
-      if (username === 'admin' && password === '12345') {
-        document.cookie = 'rb_auth=1; path=/; max-age=86400'
+      const role = checkLogin(username, password)
+      if (role) {
+        doLogin(role)
         router.push('/')
         router.refresh()
       } else {

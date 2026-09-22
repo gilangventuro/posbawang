@@ -7,6 +7,7 @@ import { tambahStockMasuk, getData, hapusStockMasuk } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg, getTodayISO } from '@/lib/utils'
 import { StockMasuk, JenisItem } from '@/lib/types'
 import { simpanInvoice, bukaInvoice, formatUkuran } from '@/lib/invoices'
+import { useRole } from '@/lib/auth'
 
 export default function StockMasukPage() {
   const [list, setList] = useState<StockMasuk[]>([])
@@ -15,6 +16,8 @@ export default function StockMasukPage() {
   const [success, setSuccess] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const { isAdmin } = useRole()
 
   const loadData = () => setList([...getData().stockMasuk].reverse())
 
@@ -67,7 +70,8 @@ export default function StockMasukPage() {
     <div>
       <PageHeader title="Stock Masuk" description="Catat pembelian bawang mentah" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isAdmin ? 'lg:grid-cols-5' : ''}`}>
+        {isAdmin && (
         <div className="col-span-1 lg:col-span-2">
           <FormCard title="Form Pembelian Bawang" description="Input data stok masuk">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -212,8 +216,9 @@ export default function StockMasukPage() {
             </form>
           </FormCard>
         </div>
+        )}
 
-        <div className="col-span-1 lg:col-span-3">
+        <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
           <FormCard title={`Riwayat Pembelian (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (
@@ -264,15 +269,17 @@ export default function StockMasukPage() {
                                 </svg>
                               </button>
                             )}
-                            <button
-                              onClick={() => handleHapus(item.id)}
-                              className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
-                              title="Hapus"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleHapus(item.id)}
+                                className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
+                                title="Hapus"
+                              >
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

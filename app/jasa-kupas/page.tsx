@@ -6,12 +6,15 @@ import FormCard from '@/components/FormCard'
 import { tambahJasaKupas, getData, hapusJasaKupas } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg, getTodayISO } from '@/lib/utils'
 import { JasaKupas, TipeKupas } from '@/lib/types'
+import { useRole } from '@/lib/auth'
 
 export default function JasaKupasPage() {
   const [list, setList] = useState<JasaKupas[]>([])
   const [form, setForm] = useState({ tanggal: getTodayISO(), tipe_kupas: 'jasa' as TipeKupas, berat_kg: '', biaya_per_kg: '', catatan: '' })
   const [success, setSuccess] = useState(false)
   const [stokMentah, setStokMentah] = useState(0)
+
+  const { isAdmin } = useRole()
 
   const loadData = () => {
     const data = getData()
@@ -56,8 +59,8 @@ export default function JasaKupasPage() {
     <div>
       <PageHeader title="Jasa Kupas" description="Catat biaya jasa pengupasan bawang" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="col-span-1 lg:col-span-2">
+      <div className={`grid grid-cols-1 gap-6 ${isAdmin ? 'lg:grid-cols-5' : ''}`}>
+        {isAdmin && <div className="col-span-1 lg:col-span-2">
           <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-2xl px-5 py-4 mb-4">
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wide">Stok Bawang Mentah Tersedia</p>
             <p className="text-2xl font-bold text-amber-800 dark:text-amber-200 mt-1">{formatKg(stokMentah)}</p>
@@ -166,9 +169,9 @@ export default function JasaKupasPage() {
               )}
             </form>
           </FormCard>
-        </div>
+        </div>}
 
-        <div className="col-span-1 lg:col-span-3">
+        <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
           <FormCard title={`Riwayat Jasa Kupas (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (
@@ -211,15 +214,17 @@ export default function JasaKupasPage() {
                           {item.tipe_kupas === 'sendiri' ? <span className="text-teal-600 dark:text-teal-400">Rp 0</span> : formatRupiah(item.total_biaya)}
                         </td>
                         <td className="py-3">
-                          <button
-                            onClick={() => handleHapus(item.id)}
-                            className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleHapus(item.id)}
+                              className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

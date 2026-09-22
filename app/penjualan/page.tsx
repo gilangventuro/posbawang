@@ -6,12 +6,15 @@ import FormCard from '@/components/FormCard'
 import { tambahPenjualan, getData, hapusPenjualan } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg, getTodayISO } from '@/lib/utils'
 import { Penjualan, JenisBawang } from '@/lib/types'
+import { useRole } from '@/lib/auth'
 
 export default function PenjualanPage() {
   const [list, setList] = useState<Penjualan[]>([])
   const [form, setForm] = useState({ tanggal: getTodayISO(), jenis: 'tidak_kupas' as JenisBawang, berat_kg: '', harga_jual_per_kg: '', catatan: '' })
   const [success, setSuccess] = useState(false)
   const [stok, setStok] = useState({ mentah: 0, kupas: 0 })
+
+  const { isAdmin } = useRole()
 
   const loadData = () => {
     const data = getData()
@@ -86,7 +89,8 @@ export default function PenjualanPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${isAdmin ? 'lg:grid-cols-5' : ''}`}>
+        {isAdmin && (
         <div className="col-span-1 lg:col-span-2">
           <FormCard title="Form Penjualan" description="Input data penjualan bawang">
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -177,8 +181,9 @@ export default function PenjualanPage() {
             </form>
           </FormCard>
         </div>
+        )}
 
-        <div className="col-span-1 lg:col-span-3">
+        <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
           <FormCard title={`Riwayat Penjualan (${list.length} data)`}>
             <div className="overflow-x-auto">
               {list.length === 0 ? (
@@ -217,15 +222,17 @@ export default function PenjualanPage() {
                         <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>
                         <td className="py-3 pr-4 text-right font-semibold text-emerald-700 dark:text-emerald-300">{formatRupiah(item.total_harga)}</td>
                         <td className="py-3">
-                          <button
-                            onClick={() => handleHapus(item.id)}
-                            className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
-                            title="Hapus"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
+                          {isAdmin && (
+                            <button
+                              onClick={() => handleHapus(item.id)}
+                              className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
+                              title="Hapus"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

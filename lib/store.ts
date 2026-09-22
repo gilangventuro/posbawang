@@ -1,8 +1,9 @@
 'use client'
 
-import { AppData, StockMasuk, JasaKupas, Penjualan, Reseller, RingkasanKeuangan } from './types'
+import { AppData, StockMasuk, JasaKupas, Penjualan, Reseller, RingkasanKeuangan, SnapshotLaporan } from './types'
 
 const STORAGE_KEY = 'posbawang_data'
+const SNAPSHOT_KEY = 'posbawang_snapshots'
 
 const defaultData: AppData = {
   stockMasuk: [],
@@ -97,6 +98,75 @@ export function setModalAwal(nominal: number) {
   data.modalAwal = nominal
   saveData(data)
 }
+
+// ── Snapshot Laporan ────────────────────────────────────────────────────────
+
+export function getSnapshots(): SnapshotLaporan[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(SNAPSHOT_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+export function simpanSnapshot(judul: string, catatan: string): SnapshotLaporan {
+  const snapshots = getSnapshots()
+  const data = getData()
+  const ringkasan = hitungRingkasan()
+  const snap: SnapshotLaporan = {
+    id: crypto.randomUUID(),
+    judul: judul.trim(),
+    catatan: catatan.trim(),
+    tanggalSimpan: new Date().toISOString(),
+    ringkasan,
+    totalTransaksi: {
+      beli: data.stockMasuk.length,
+      kupas: data.jasaKupas.length,
+      jual: data.penjualan.length,
+      reseller: (data.reseller ?? []).length,
+    },
+  }
+  snapshots.unshift(snap)
+  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshots))
+  return snap
+}
+
+export function hapusSnapshot(id: string) {
+  const updated = getSnapshots().filter(s => s.id !== id)
+  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(updated))
+}
+
+// ── Backup / Restore ─────────────────────────────────────────────────────────
+
+export function exportDataJSON() {
+  const backup = {
+    data: getData(),
+    snapshots: getSnapshots(),
+    exportedAt: new Date().toISOString(),
+    version: 1,
+  }
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `posbawang_backup_${new Date().toISOString().split('T')[0]}.json`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+export function importDataJSON(json: string): boolean {
+  try {
+    const parsed = JSON.parse(json)
+    const appData: AppData = parsed.data ?? parsed
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData))
+    if (Array.isArray(parsed.snapshots)) {
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(parsed.snapshots))
+    }
+    return true
+  } catch { return false }
+}
+
+// ── Ringkasan ────────────────────────────────────────────────────────────────
 
 export function hitungRingkasan(): RingkasanKeuangan {
   const data = getData()

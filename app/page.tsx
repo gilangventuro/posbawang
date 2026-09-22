@@ -7,6 +7,7 @@ import { hitungRingkasan, setModalAwal } from '@/lib/store'
 import { formatRupiah, formatKg } from '@/lib/utils'
 import { RingkasanKeuangan } from '@/lib/types'
 import Link from 'next/link'
+import { useRole } from '@/lib/auth'
 
 export default function Dashboard() {
   const [ringkasan, setRingkasan] = useState<RingkasanKeuangan>({
@@ -21,6 +22,7 @@ export default function Dashboard() {
     stokBawangMentah: 0,
     stokBawangKupas: 0,
   })
+  const { isAdmin } = useRole()
   const [editModal, setEditModal] = useState(false)
   const [inputModal, setInputModal] = useState('')
 
@@ -102,7 +104,7 @@ export default function Dashboard() {
                 <p className="text-xl font-bold text-slate-800 dark:text-white mt-1">{formatRupiah(ringkasan.modalAwal)}</p>
               )}
             </div>
-            {!editModal && (
+            {!editModal && isAdmin && (
               <button
                 onClick={() => { setEditModal(true); setInputModal(String(ringkasan.modalAwal)) }}
                 className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition cursor-pointer"

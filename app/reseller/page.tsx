@@ -6,6 +6,7 @@ import FormCard from '@/components/FormCard'
 import { tambahReseller, hapusReseller, getData } from '@/lib/store'
 import { formatRupiah, formatKg, formatTanggal } from '@/lib/utils'
 import { Reseller } from '@/lib/types'
+import { useRole } from '@/lib/auth'
 
 const FEE_PRESETS = [3000, 5000, 7000, 10000]
 
@@ -18,6 +19,8 @@ export default function ResellerPage() {
   const [catatan, setCatatan] = useState('')
   const [loading, setLoading] = useState(false)
   const [sukses, setSukses] = useState(false)
+
+  const { isAdmin } = useRole()
 
   const loadData = () => setList([...getData().reseller].reverse())
 
@@ -61,7 +64,7 @@ export default function ResellerPage() {
     <div>
       <PageHeader title="Reseller" description="Catat fee pihak ketiga sebagai reseller bawang" />
 
-      <FormCard title="Catat Fee Reseller" description="Fee reseller dihitung sebagai pengeluaran">
+      {isAdmin && <FormCard title="Catat Fee Reseller" description="Fee reseller dihitung sebagai pengeluaran">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -164,7 +167,7 @@ export default function ResellerPage() {
             {loading ? 'Menyimpan...' : 'Simpan Fee Reseller'}
           </button>
         </form>
-      </FormCard>
+      </FormCard>}
 
       {/* Riwayat */}
       {list.length > 0 && (
@@ -195,15 +198,17 @@ export default function ResellerPage() {
                       <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
                       <td className="px-5 py-3.5 text-right">
-                        <button
-                          onClick={() => handleHapus(item.id)}
-                          className="text-slate-400 hover:text-red-500 transition cursor-pointer"
-                          title="Hapus"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleHapus(item.id)}
+                            className="text-slate-400 hover:text-red-500 transition cursor-pointer"
+                            title="Hapus"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
