@@ -15,6 +15,7 @@ export default function StockMasukPage() {
   const [notaFile, setNotaFile] = useState<File | null>(null)
   const [success, setSuccess] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [filterTanggal, setFilterTanggal] = useState(getTodayISO())
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { isAdmin } = useRole()
@@ -68,6 +69,9 @@ export default function StockMasukPage() {
 
   const grouped = list.reduce((acc, item) => { if (!acc[item.tanggal]) acc[item.tanggal] = []; acc[item.tanggal].push(item); return acc }, {} as Record<string, StockMasuk[]>)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+  const filteredList = filterTanggal ? list.filter(i => i.tanggal === filterTanggal) : list
+  const filteredBerat = filteredList.reduce((s, i) => s + i.berat_kg, 0)
+  const filteredTotal = filteredList.reduce((s, i) => s + i.total_harga, 0)
 
   return (
     <div>
@@ -222,7 +226,35 @@ export default function StockMasukPage() {
         )}
 
         <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
-          <FormCard title={`Riwayat Pembelian (${list.length} data)`}>
+          <FormCard title={`Riwayat Pembelian (${filteredList.length} data)`}>
+            {/* Filter tanggal */}
+            {list.length > 0 && (
+              <div className="mb-4 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Filter Tanggal</label>
+                  <select
+                    value={filterTanggal}
+                    onChange={e => setFilterTanggal(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition cursor-pointer"
+                  >
+                    <option value="">Semua Tanggal ({list.length} transaksi)</option>
+                    {sortedDates.map(date => (
+                      <option key={date} value={date}>{formatTanggal(date)} — {grouped[date].length} transaksi</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{filterTanggal ? 'Berat Hari Ini' : 'Total Semua Berat'}</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{formatKg(filteredBerat)}</p>
+                  </div>
+                  <div className="bg-blue-50 dark:bg-blue-900/30 rounded-xl px-4 py-3">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{filterTanggal ? 'Total Pembelian Hari Ini' : 'Total Semua Pembelian'}</p>
+                    <p className="text-sm font-bold text-blue-800 dark:text-blue-200 mt-0.5">{formatRupiah(filteredTotal)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               {list.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
@@ -230,6 +262,10 @@ export default function StockMasukPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                   </svg>
                   <p className="text-sm">Belum ada data pembelian</p>
+                </div>
+              ) : filteredList.length === 0 ? (
+                <div className="text-center py-10 text-slate-400 dark:text-slate-500">
+                  <p className="text-sm">Tidak ada data untuk tanggal ini</p>
                 </div>
               ) : (
                 <table className="w-full text-sm">
@@ -243,65 +279,75 @@ export default function StockMasukPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                    {sortedDates.flatMap((date, idx) => [
-                      <tr key={`d-${date}`}>
-                        <td colSpan={5} className={`pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-1'}`}>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
-                            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
-                          </div>
-                        </td>
-                      </tr>,
-                      ...grouped[date].map(item => (
-                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                          <td className="py-3 pr-4">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              item.jenis_item === 'bawang_putih'
-                                ? 'bg-purple-100 text-purple-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}>
-                              {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
-                            </span>
-                          </td>
-                          <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
-                          <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
-                          <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-1.5">
-                              {item.notaId && (
-                                <button
-                                  onClick={() => bukaInvoice(item.notaId!)}
-                                  className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer"
-                                  title="Lihat Nota"
-                                >
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                </button>
-                              )}
-                              {isAdmin && (
-                                <button
-                                  onClick={() => handleHapus(item.id)}
-                                  className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer"
-                                  title="Hapus"
-                                >
-                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    ])}
+                    {filterTanggal
+                      ? filteredList.map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td className="py-3 pr-4">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis_item === 'bawang_putih' ? 'bg-purple-100 text-purple-700' : 'bg-red-100 text-red-700'}`}>
+                                {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
+                              </span>
+                            </td>
+                            <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
+                            <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
+                            <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
+                            <td className="py-3">
+                              <div className="flex items-center gap-1.5">
+                                {item.notaId && (
+                                  <button onClick={() => bukaInvoice(item.notaId!)} className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer" title="Lihat Nota">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                  </button>
+                                )}
+                                {isAdmin && (
+                                  <button onClick={() => handleHapus(item.id)} className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer" title="Hapus">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      : sortedDates.flatMap((date, idx) => [
+                          <tr key={`d-${date}`}>
+                            <td colSpan={5} className={`pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-1'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
+                                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
+                              </div>
+                            </td>
+                          </tr>,
+                          ...grouped[date].map(item => (
+                            <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                              <td className="py-3 pr-4">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis_item === 'bawang_putih' ? 'bg-purple-100 text-purple-700' : 'bg-red-100 text-red-700'}`}>
+                                  {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
+                                </span>
+                              </td>
+                              <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-slate-100">{formatKg(item.berat_kg)}</td>
+                              <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.harga_per_kg)}</td>
+                              <td className="py-3 pr-4 text-right font-semibold text-blue-700 dark:text-blue-200">{formatRupiah(item.total_harga)}</td>
+                              <td className="py-3">
+                                <div className="flex items-center gap-1.5">
+                                  {item.notaId && (
+                                    <button onClick={() => bukaInvoice(item.notaId!)} className="text-slate-300 hover:text-blue-500 transition-colors cursor-pointer" title="Lihat Nota">
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    </button>
+                                  )}
+                                  {isAdmin && (
+                                    <button onClick={() => handleHapus(item.id)} className="text-slate-300 hover:text-red-500 transition-colors cursor-pointer" title="Hapus">
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        ])
+                    }
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-slate-200 dark:border-slate-700">
                       <td colSpan={3} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total</td>
-                      <td className="pt-3 text-right font-bold text-blue-700 dark:text-blue-200">
-                        {formatRupiah(list.reduce((s, i) => s + i.total_harga, 0))}
-                      </td>
+                      <td className="pt-3 text-right font-bold text-blue-700 dark:text-blue-200">{formatRupiah(filteredTotal)}</td>
                       <td></td>
                     </tr>
                   </tfoot>

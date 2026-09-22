@@ -13,6 +13,7 @@ export default function PenjualanPage() {
   const [form, setForm] = useState({ tanggal: getTodayISO(), jenis_item: 'bawang_putih' as JenisItem, jenis: 'tidak_kupas' as JenisBawang, berat_kg: '', harga_jual_per_kg: '', catatan: '' })
   const [success, setSuccess] = useState(false)
   const [stok, setStok] = useState({ putihMentah: 0, merahMentah: 0, kupas: 0 })
+  const [filterTanggal, setFilterTanggal] = useState(getTodayISO())
 
   const { isAdmin } = useRole()
 
@@ -67,6 +68,9 @@ export default function PenjualanPage() {
 
   const grouped = list.reduce((acc, item) => { if (!acc[item.tanggal]) acc[item.tanggal] = []; acc[item.tanggal].push(item); return acc }, {} as Record<string, Penjualan[]>)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+  const filteredList = filterTanggal ? list.filter(i => i.tanggal === filterTanggal) : list
+  const filteredBerat = filteredList.reduce((s, i) => s + i.berat_kg, 0)
+  const filteredTotal = filteredList.reduce((s, i) => s + i.total_harga, 0)
 
   return (
     <div>
@@ -222,7 +226,34 @@ export default function PenjualanPage() {
         )}
 
         <div className={`col-span-1 ${isAdmin ? 'lg:col-span-3' : ''}`}>
-          <FormCard title={`Riwayat Penjualan (${list.length} data)`}>
+          <FormCard title={`Riwayat Penjualan (${filteredList.length} data)`}>
+            {list.length > 0 && (
+              <div className="mb-4 space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Filter Tanggal</label>
+                  <select
+                    value={filterTanggal}
+                    onChange={e => setFilterTanggal(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition cursor-pointer"
+                  >
+                    <option value="">Semua Tanggal ({list.length} transaksi)</option>
+                    {sortedDates.map(date => (
+                      <option key={date} value={date}>{formatTanggal(date)} — {grouped[date].length} transaksi</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl px-4 py-3">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{filterTanggal ? 'Berat Terjual' : 'Total Semua Berat'}</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white mt-0.5">{formatKg(filteredBerat)}</p>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-900/30 rounded-xl px-4 py-3">
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">{filterTanggal ? 'Pendapatan Hari Ini' : 'Total Semua Pendapatan'}</p>
+                    <p className="text-sm font-bold text-emerald-800 dark:text-emerald-200 mt-0.5">{formatRupiah(filteredTotal)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="overflow-x-auto">
               {list.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
@@ -230,6 +261,10 @@ export default function PenjualanPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                   <p className="text-sm">Belum ada data penjualan</p>
+                </div>
+              ) : filteredList.length === 0 ? (
+                <div className="text-center py-10 text-slate-400">
+                  <p className="text-sm">Tidak ada data untuk tanggal ini</p>
                 </div>
               ) : (
                 <table className="w-full text-sm">
@@ -243,63 +278,55 @@ export default function PenjualanPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                    {sortedDates.flatMap((date, idx) => [
-                      <tr key={`d-${date}`}>
-                        <td colSpan={5} className={`pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-1'}`}>
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
-                            <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
-                          </div>
-                        </td>
-                      </tr>,
-                      ...grouped[date].map(item => (
-                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                          <td className="py-3 pr-4">
-                            <div className="flex flex-col gap-0.5">
-                              {item.jenis_item && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                  item.jenis_item === 'bawang_putih'
-                                    ? 'bg-purple-100 text-purple-700'
-                                    : 'bg-red-100 text-red-700'
-                                }`}>
-                                  {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
-                                </span>
-                              )}
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                item.jenis === 'kupas'
-                                  ? 'bg-orange-100 text-orange-700'
-                                  : 'bg-blue-100 text-blue-700'
-                              }`}>
-                                {item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-white">{formatKg(item.berat_kg)}</td>
-                          <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>
-                          <td className="py-3 pr-4 text-right font-semibold text-emerald-700 dark:text-emerald-300">{formatRupiah(item.total_harga)}</td>
-                          <td className="py-3">
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleHapus(item.id)}
-                                className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer"
-                                title="Hapus"
-                              >
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    ])}
+                    {filterTanggal
+                      ? filteredList.map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td className="py-3 pr-4">
+                              <div className="flex flex-col gap-0.5">
+                                {item.jenis_item && <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis_item === 'bawang_putih' ? 'bg-purple-100 text-purple-700' : 'bg-red-100 text-red-700'}`}>{item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}</span>}
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis === 'kupas' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>{item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-white">{formatKg(item.berat_kg)}</td>
+                            <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>
+                            <td className="py-3 pr-4 text-right font-semibold text-emerald-700 dark:text-emerald-300">{formatRupiah(item.total_harga)}</td>
+                            <td className="py-3">
+                              {isAdmin && <button onClick={() => handleHapus(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer" title="Hapus"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
+                            </td>
+                          </tr>
+                        ))
+                      : sortedDates.flatMap((date, idx) => [
+                          <tr key={`d-${date}`}>
+                            <td colSpan={5} className={`pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-1'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
+                                <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
+                              </div>
+                            </td>
+                          </tr>,
+                          ...grouped[date].map(item => (
+                            <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                              <td className="py-3 pr-4">
+                                <div className="flex flex-col gap-0.5">
+                                  {item.jenis_item && <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis_item === 'bawang_putih' ? 'bg-purple-100 text-purple-700' : 'bg-red-100 text-red-700'}`}>{item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}</span>}
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${item.jenis === 'kupas' ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700'}`}>{item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}</span>
+                                </div>
+                              </td>
+                              <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-white">{formatKg(item.berat_kg)}</td>
+                              <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>
+                              <td className="py-3 pr-4 text-right font-semibold text-emerald-700 dark:text-emerald-300">{formatRupiah(item.total_harga)}</td>
+                              <td className="py-3">
+                                {isAdmin && <button onClick={() => handleHapus(item.id)} className="text-slate-300 dark:text-slate-600 hover:text-red-500 transition-colors cursor-pointer" title="Hapus"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}
+                              </td>
+                            </tr>
+                          ))
+                        ])
+                    }
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-slate-200 dark:border-slate-700">
                       <td colSpan={3} className="pt-3 text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase tracking-wide">Total Pendapatan</td>
-                      <td className="pt-3 text-right font-bold text-emerald-700 dark:text-emerald-300">
-                        {formatRupiah(list.reduce((s, i) => s + i.total_harga, 0))}
-                      </td>
+                      <td className="pt-3 text-right font-bold text-emerald-700 dark:text-emerald-300">{formatRupiah(filteredTotal)}</td>
                       <td></td>
                     </tr>
                   </tfoot>

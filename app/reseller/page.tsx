@@ -19,6 +19,7 @@ export default function ResellerPage() {
   const [catatan, setCatatan] = useState('')
   const [loading, setLoading] = useState(false)
   const [sukses, setSukses] = useState(false)
+  const [filterTanggal, setFilterTanggal] = useState(new Date().toISOString().split('T')[0])
 
   const { isAdmin } = useRole()
 
@@ -62,6 +63,11 @@ export default function ResellerPage() {
 
   const grouped = list.reduce((acc, item) => { if (!acc[item.tanggal]) acc[item.tanggal] = []; acc[item.tanggal].push(item); return acc }, {} as Record<string, Reseller[]>)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
+  const filteredList = filterTanggal ? list.filter(i => i.tanggal === filterTanggal) : list
+  const filteredBerat = filteredList.reduce((s, i) => s + i.berat_kg, 0)
+  const filteredTotal = filteredList.reduce((s, i) => s + i.total_fee, 0)
+
+  const allDates = sortedDates
 
   return (
     <div>
@@ -175,8 +181,38 @@ export default function ResellerPage() {
       {/* Riwayat */}
       {list.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">Riwayat Fee Reseller</h3>
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-white mb-3">Riwayat Fee Reseller ({filteredList.length})</h3>
+
+          {/* Filter + Summary */}
+          <div className="mb-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap">Filter Tanggal</label>
+              <input
+                type="date"
+                value={filterTanggal}
+                onChange={e => setFilterTanggal(e.target.value)}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-sm focus:border-violet-500 focus:ring-2 focus:ring-violet-100 transition"
+              />
+              {filterTanggal && (
+                <button onClick={() => setFilterTanggal('')} className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer">Semua</button>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-xl px-4 py-3 border border-slate-100 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{filterTanggal ? 'Berat Hari Ini' : 'Total Berat'}</p>
+              <p className="text-base font-bold text-slate-700 dark:text-white">{formatKg(filteredBerat)}</p>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl px-4 py-3 border border-red-100 dark:border-red-800">
+              <p className="text-xs text-red-600 dark:text-red-400 mb-0.5">{filterTanggal ? 'Fee Hari Ini' : 'Total Fee'}</p>
+              <p className="text-base font-bold text-red-700 dark:text-red-300">-{formatRupiah(filteredTotal)}</p>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            {filteredList.length === 0 ? (
+              <div className="text-center py-10 text-slate-400"><p className="text-sm">Tidak ada data untuk tanggal ini</p></div>
+            ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-700 border-b border-slate-100 dark:border-slate-600">
@@ -189,52 +225,40 @@ export default function ResellerPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
-                  {sortedDates.flatMap((date, idx) => [
-                    <tr key={`d-${date}`}>
-                      <td colSpan={5} className={`px-5 pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-2'}`}>
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span>
-                          <div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" />
-                        </div>
-                      </td>
-                    </tr>,
-                    ...grouped[date].map(item => (
-                      <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                        <td className="px-5 py-3.5">
-                          <p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>
-                          {item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}
-                        </td>
-                        <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>
-                        <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
-                        <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
-                        <td className="px-5 py-3.5 text-right">
-                          {isAdmin && (
-                            <button
-                              onClick={() => handleHapus(item.id)}
-                              className="text-slate-400 hover:text-red-500 transition cursor-pointer"
-                              title="Hapus"
-                            >
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ])}
+                  {filterTanggal
+                    ? filteredList.map(item => (
+                        <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                          <td className="px-5 py-3.5"><p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>{item.catatan && <p className="text-xs text-slate-400 mt-0.5">{item.catatan}</p>}</td>
+                          <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>
+                          <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
+                          <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
+                          <td className="px-5 py-3.5 text-right">{isAdmin && <button onClick={() => handleHapus(item.id)} className="text-slate-400 hover:text-red-500 transition cursor-pointer" title="Hapus"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}</td>
+                        </tr>
+                      ))
+                    : allDates.flatMap((date, idx) => [
+                        <tr key={`d-${date}`}><td colSpan={5} className={`px-5 pb-1.5 ${idx > 0 ? 'pt-5' : 'pt-2'}`}><div className="flex items-center gap-3"><span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">{formatTanggal(date)}</span><div className="flex-1 h-px bg-slate-200 dark:bg-slate-600" /></div></td></tr>,
+                        ...grouped[date].map(item => (
+                          <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                            <td className="px-5 py-3.5"><p className="text-slate-800 dark:text-white font-medium">{item.nama_reseller}</p>{item.catatan && <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{item.catatan}</p>}</td>
+                            <td className="px-5 py-3.5 text-right text-slate-700 dark:text-slate-200">{formatKg(item.berat_kg)}</td>
+                            <td className="px-5 py-3.5 text-right text-slate-600 dark:text-slate-300">{formatRupiah(item.fee_per_kg)}</td>
+                            <td className="px-5 py-3.5 text-right font-semibold text-red-600 dark:text-red-400">-{formatRupiah(item.total_fee)}</td>
+                            <td className="px-5 py-3.5 text-right">{isAdmin && <button onClick={() => handleHapus(item.id)} className="text-slate-400 hover:text-red-500 transition cursor-pointer" title="Hapus"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>}</td>
+                          </tr>
+                        ))
+                      ])
+                  }
                 </tbody>
                 <tfoot className="bg-slate-50 dark:bg-slate-700 border-t border-slate-200 dark:border-slate-600">
                   <tr>
                     <td colSpan={3} className="px-5 py-3 text-sm font-semibold text-slate-700 dark:text-white">Total</td>
-                    <td className="px-5 py-3 text-right font-bold text-red-600 dark:text-red-400">
-                      -{formatRupiah(list.reduce((s, i) => s + i.total_fee, 0))}
-                    </td>
+                    <td className="px-5 py-3 text-right font-bold text-red-600 dark:text-red-400">-{formatRupiah(filteredTotal)}</td>
                     <td></td>
                   </tr>
                 </tfoot>
               </table>
             </div>
+            )}
           </div>
         </div>
       )}
