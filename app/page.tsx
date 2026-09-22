@@ -18,6 +18,8 @@ export default function Dashboard() {
     totalPengeluaran: 0,
     totalPendapatan: 0,
     keuntungan: 0,
+    totalCicilan: 0,
+    keuntunganSetelahHutang: 0,
     saldoAkhir: 0,
     stokBawangMentah: 0,
     stokBawangKupas: 0,
