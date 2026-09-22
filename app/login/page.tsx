@@ -53,7 +53,7 @@ export default function LoginPage() {
                 type="text"
                 value={username}
                 onChange={e => { setUsername(e.target.value); setError('') }}
-                placeholder="admin"
+                placeholder="masukan username"
                 autoComplete="username"
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white text-sm focus:border-[#B04B87] focus:ring-2 focus:ring-[#B04B87]/20 transition"
@@ -69,7 +69,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => { setPassword(e.target.value); setError('') }}
-                  placeholder="••••••"
+                  placeholder="isi kode sandi"
                   autoComplete="current-password"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-white text-sm focus:border-[#B04B87] focus:ring-2 focus:ring-[#B04B87]/20 transition pr-10"
                 />

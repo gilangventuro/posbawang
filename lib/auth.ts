@@ -5,8 +5,7 @@ import { useState, useEffect } from 'react'
 export type UserRole = 'admin' | 'viewer'
 
 export const ACCOUNTS: { username: string; password: string; role: UserRole; label: string }[] = [
-  { username: 'admin',  password: '12345',    role: 'admin',  label: 'Administrator' },
-  { username: 'viewer', password: 'lihat123', role: 'viewer', label: 'Pengguna (Lihat Saja)' },
+  { username: 'admin', password: '12345', role: 'admin', label: 'Administrator' },
 ]
 
 export function checkLogin(username: string, password: string): UserRole | null {
