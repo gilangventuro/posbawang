@@ -5,26 +5,29 @@ import PageHeader from '@/components/PageHeader'
 import FormCard from '@/components/FormCard'
 import { tambahPenjualan, getData, hapusPenjualan } from '@/lib/store'
 import { formatRupiah, formatTanggal, formatKg, getTodayISO } from '@/lib/utils'
-import { Penjualan, JenisBawang } from '@/lib/types'
+import { Penjualan, JenisBawang, JenisItem } from '@/lib/types'
 import { useRole } from '@/lib/auth'
 
 export default function PenjualanPage() {
   const [list, setList] = useState<Penjualan[]>([])
-  const [form, setForm] = useState({ tanggal: getTodayISO(), jenis: 'tidak_kupas' as JenisBawang, berat_kg: '', harga_jual_per_kg: '', catatan: '' })
+  const [form, setForm] = useState({ tanggal: getTodayISO(), jenis_item: 'bawang_putih' as JenisItem, jenis: 'tidak_kupas' as JenisBawang, berat_kg: '', harga_jual_per_kg: '', catatan: '' })
   const [success, setSuccess] = useState(false)
-  const [stok, setStok] = useState({ mentah: 0, kupas: 0 })
+  const [stok, setStok] = useState({ putihMentah: 0, merahMentah: 0, kupas: 0 })
 
   const { isAdmin } = useRole()
 
   const loadData = () => {
     const data = getData()
     setList([...data.penjualan].reverse())
-    const totalBeli = data.stockMasuk.reduce((s, i) => s + i.berat_kg, 0)
+    const totalBeliPutih = data.stockMasuk.filter(i => i.jenis_item === 'bawang_putih').reduce((s, i) => s + i.berat_kg, 0)
+    const totalBeliMerah = data.stockMasuk.filter(i => i.jenis_item === 'bawang_merah').reduce((s, i) => s + i.berat_kg, 0)
     const totalKupas = data.jasaKupas.reduce((s, i) => s + i.berat_kg, 0)
-    const totalJualMentah = data.penjualan.filter(i => i.jenis === 'tidak_kupas').reduce((s, i) => s + i.berat_kg, 0)
+    const totalJualPutihMentah = data.penjualan.filter(i => i.jenis_item === 'bawang_putih' && i.jenis === 'tidak_kupas').reduce((s, i) => s + i.berat_kg, 0)
+    const totalJualMerahMentah = data.penjualan.filter(i => i.jenis_item === 'bawang_merah' && i.jenis === 'tidak_kupas').reduce((s, i) => s + i.berat_kg, 0)
     const totalJualKupas = data.penjualan.filter(i => i.jenis === 'kupas').reduce((s, i) => s + i.berat_kg, 0)
     setStok({
-      mentah: Math.max(0, totalBeli - totalKupas - totalJualMentah),
+      putihMentah: Math.max(0, totalBeliPutih - totalKupas - totalJualPutihMentah),
+      merahMentah: Math.max(0, totalBeliMerah - totalJualMerahMentah),
       kupas: Math.max(0, totalKupas - totalJualKupas),
     })
   }
@@ -38,13 +41,14 @@ export default function PenjualanPage() {
     if (!form.berat_kg || !form.harga_jual_per_kg) return
     tambahPenjualan({
       tanggal: form.tanggal,
+      jenis_item: form.jenis_item,
       jenis: form.jenis,
       berat_kg: parseFloat(form.berat_kg),
       harga_jual_per_kg: parseFloat(form.harga_jual_per_kg),
       total_harga: totalHarga,
       catatan: form.catatan,
     })
-    setForm({ tanggal: getTodayISO(), jenis: 'tidak_kupas', berat_kg: '', harga_jual_per_kg: '', catatan: '' })
+    setForm({ tanggal: getTodayISO(), jenis_item: form.jenis_item, jenis: 'tidak_kupas', berat_kg: '', harga_jual_per_kg: '', catatan: '' })
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
     loadData()
@@ -57,23 +61,36 @@ export default function PenjualanPage() {
     }
   }
 
-  const stokTersedia = form.jenis === 'kupas' ? stok.kupas : stok.mentah
+  const stokTersedia = form.jenis === 'kupas'
+    ? stok.kupas
+    : form.jenis_item === 'bawang_putih' ? stok.putihMentah : stok.merahMentah
 
   return (
     <div>
       <PageHeader title="Penjualan" description="Catat penjualan bawang kupas maupun tidak kupas" />
 
       {/* Stok banner */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center flex-shrink-0">
-            <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-800 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
           <div>
-            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Stok Bawang Mentah</p>
-            <p className="text-base font-bold text-blue-800 dark:text-blue-200">{formatKg(stok.mentah)}</p>
+            <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Putih Mentah</p>
+            <p className="text-base font-bold text-purple-800 dark:text-purple-200">{formatKg(stok.putihMentah)}</p>
+          </div>
+        </div>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-800 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">Merah Mentah</p>
+            <p className="text-base font-bold text-red-800 dark:text-red-200">{formatKg(stok.merahMentah)}</p>
           </div>
         </div>
         <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-100 dark:border-orange-800 rounded-xl px-4 py-3 flex items-center gap-3">
@@ -83,7 +100,7 @@ export default function PenjualanPage() {
             </svg>
           </div>
           <div>
-            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Stok Bawang Kupas</p>
+            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Stok Kupas</p>
             <p className="text-base font-bold text-orange-800 dark:text-orange-200">{formatKg(stok.kupas)}</p>
           </div>
         </div>
@@ -107,13 +124,31 @@ export default function PenjualanPage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-white mb-1.5">Jenis Bawang</label>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  {(['bawang_putih', 'bawang_merah'] as JenisItem[]).map(j => (
+                    <button
+                      key={j}
+                      type="button"
+                      onClick={() => setForm({ ...form, jenis_item: j })}
+                      className={`py-2 rounded-xl border text-sm font-semibold transition cursor-pointer ${
+                        form.jenis_item === j
+                          ? j === 'bawang_putih'
+                            ? 'bg-purple-600 border-purple-600 text-white'
+                            : 'bg-red-500 border-red-500 text-white'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      {j === 'bawang_putih' ? 'Bawang Putih' : 'Bawang Merah'}
+                    </button>
+                  ))}
+                </div>
                 <select
                   value={form.jenis}
                   onChange={e => setForm({ ...form, jenis: e.target.value as JenisBawang })}
                   className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-sm text-slate-800 dark:text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition cursor-pointer"
                 >
-                  <option value="tidak_kupas">Bawang Tidak Kupas</option>
-                  <option value="kupas">Bawang Kupas</option>
+                  <option value="tidak_kupas">Tidak Kupas</option>
+                  <option value="kupas">Kupas</option>
                 </select>
                 <p className="text-xs text-slate-400 dark:text-slate-300 mt-1">
                   Stok tersedia: <span className="font-semibold text-slate-600 dark:text-slate-200">{formatKg(stokTersedia)}</span>
@@ -139,7 +174,7 @@ export default function PenjualanPage() {
                 <input
                   type="number"
                   min="0"
-                  step="100"
+                  step="1"
                   placeholder="contoh: 20000"
                   value={form.harga_jual_per_kg}
                   onChange={e => setForm({ ...form, harga_jual_per_kg: e.target.value })}
@@ -210,13 +245,24 @@ export default function PenjualanPage() {
                       <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                         <td className="py-3 pr-4 text-slate-700 dark:text-white">{formatTanggal(item.tanggal)}</td>
                         <td className="py-3 pr-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                            item.jenis === 'kupas'
-                              ? 'bg-orange-100 text-orange-700'
-                              : 'bg-blue-100 text-blue-700'
-                          }`}>
-                            {item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            {item.jenis_item && (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                item.jenis_item === 'bawang_putih'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {item.jenis_item === 'bawang_putih' ? 'Putih' : 'Merah'}
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              item.jenis === 'kupas'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {item.jenis === 'kupas' ? 'Kupas' : 'Tidak Kupas'}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 pr-4 text-right font-medium text-slate-800 dark:text-white">{formatKg(item.berat_kg)}</td>
                         <td className="py-3 pr-4 text-right text-slate-600 dark:text-slate-200">{formatRupiah(item.harga_jual_per_kg)}</td>

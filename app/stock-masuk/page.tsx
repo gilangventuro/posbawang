@@ -127,7 +127,7 @@ export default function StockMasukPage() {
                 <input
                   type="number"
                   min="0"
-                  step="100"
+                  step="1"
                   placeholder="contoh: 15000"
                   value={form.harga_per_kg}
                   onChange={e => setForm({ ...form, harga_per_kg: e.target.value })}

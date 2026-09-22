@@ -29,6 +29,7 @@ export interface JasaKupas {
 export interface Penjualan {
   id: string
   tanggal: string
+  jenis_item?: JenisItem
   jenis: JenisBawang
   berat_kg: number
   harga_jual_per_kg: number
