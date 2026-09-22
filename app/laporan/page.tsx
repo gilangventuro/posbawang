@@ -7,6 +7,7 @@ import { formatRupiah, formatKg, getTodayISO } from '@/lib/utils'
 import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Reseller, SnapshotLaporan } from '@/lib/types'
 import { simpanInvoice, getSemuaInvoice, bukaInvoice, hapusInvoice, formatUkuran, Invoice } from '@/lib/invoices'
 import { useRole } from '@/lib/auth'
+import { cetakLaporanPDF } from '@/lib/print'
 
 interface RekapHarian {
   tanggal: string
@@ -169,6 +170,11 @@ export default function LaporanPage() {
     e.target.value = ''
   }
 
+  const handleCetakPDF = () => {
+    if (!ringkasan) return
+    cetakLaporanPDF(ringkasan, rekapHarian, totalTransaksi, penjualanPerJenis)
+  }
+
   if (!ringkasan) return null
 
   const isUntung = ringkasan.keuntungan >= 0
@@ -178,7 +184,18 @@ export default function LaporanPage() {
 
   return (
     <div>
-      <PageHeader title="Laporan Keuangan" description="Ringkasan lengkap pendapatan, pengeluaran, dan keuntungan" />
+      <PageHeader title="Laporan Keuangan" description="Ringkasan lengkap pendapatan, pengeluaran, dan keuntungan">
+        <button
+          onClick={handleCetakPDF}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white cursor-pointer shadow-sm hover:opacity-90 transition"
+          style={{ background: 'linear-gradient(135deg, #B04B87 0%, #8B3A9E 100%)' }}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Cetak PDF
+        </button>
+      </PageHeader>
 
       {/* Keuntungan bersih - hero card */}
       <div className={`rounded-2xl border p-6 mb-6 ${isUntung ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800' : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'}`}>
