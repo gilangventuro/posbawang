@@ -28,15 +28,18 @@ export default function Dashboard() {
   const [editModal, setEditModal] = useState(false)
   const [inputModal, setInputModal] = useState('')
 
-  const loadRingkasan = () => setRingkasan(hitungRingkasan())
+  const loadRingkasan = async () => {
+    const r = await hitungRingkasan()
+    setRingkasan(r)
+  }
 
   useEffect(() => { loadRingkasan() }, [])
 
-  const handleSimpanModal = () => {
+  const handleSimpanModal = async () => {
     const nilai = parseFloat(inputModal.replace(/\./g, '').replace(',', '.'))
     if (!isNaN(nilai) && nilai >= 0) {
-      setModalAwal(nilai)
-      loadRingkasan()
+      await setModalAwal(nilai)
+      await loadRingkasan()
     }
     setEditModal(false)
     setInputModal('')

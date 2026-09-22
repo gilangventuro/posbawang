@@ -17,53 +17,54 @@ export default function PinjamanPage() {
   const [formHutang, setFormHutang] = useState({ judul: '', jumlahPokok: '', tanggal: getTodayISO(), catatan: '' })
   const [formCicilan, setFormCicilan] = useState({ jumlahBayar: '', tanggal: getTodayISO(), catatan: '' })
 
-  const loadData = () => {
-    setHutangList(getHutang())
-    setCicilanList(getCicilan())
+  const loadData = async () => {
+    const [hutang, cicilan] = await Promise.all([getHutang(), getCicilan()])
+    setHutangList(hutang)
+    setCicilanList(cicilan)
   }
 
   useEffect(() => { loadData() }, [])
 
-  const handleTambahHutang = (e: React.FormEvent) => {
+  const handleTambahHutang = async (e: React.FormEvent) => {
     e.preventDefault()
     const nominal = parseFloat(formHutang.jumlahPokok.replace(/\./g, '').replace(',', '.'))
     if (!formHutang.judul.trim() || isNaN(nominal) || nominal <= 0) return
-    tambahHutang({
+    await tambahHutang({
       judul: formHutang.judul.trim(),
       jumlahPokok: nominal,
       tanggal: formHutang.tanggal,
       catatan: formHutang.catatan.trim(),
     })
     setFormHutang({ judul: '', jumlahPokok: '', tanggal: getTodayISO(), catatan: '' })
-    loadData()
+    await loadData()
   }
 
-  const handleHapusHutang = (id: string) => {
+  const handleHapusHutang = async (id: string) => {
     if (!confirm('Hapus hutang dan semua cicilannya?')) return
-    hapusHutang(id)
+    await hapusHutang(id)
     if (selectedHutangId === id) setSelectedHutangId(null)
-    loadData()
+    await loadData()
   }
 
-  const handleTambahCicilan = (e: React.FormEvent) => {
+  const handleTambahCicilan = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedHutangId) return
     const nominal = parseFloat(formCicilan.jumlahBayar.replace(/\./g, '').replace(',', '.'))
     if (isNaN(nominal) || nominal <= 0) return
-    tambahCicilan({
+    await tambahCicilan({
       hutangId: selectedHutangId,
       tanggal: formCicilan.tanggal,
       jumlahBayar: nominal,
       catatan: formCicilan.catatan.trim(),
     })
     setFormCicilan({ jumlahBayar: '', tanggal: getTodayISO(), catatan: '' })
-    loadData()
+    await loadData()
   }
 
-  const handleHapusCicilan = (id: string) => {
+  const handleHapusCicilan = async (id: string) => {
     if (!confirm('Hapus catatan cicilan ini?')) return
-    hapusCicilan(id)
-    loadData()
+    await hapusCicilan(id)
+    await loadData()
   }
 
   const totalPokok = hutangList.reduce((s, h) => s + h.jumlahPokok, 0)

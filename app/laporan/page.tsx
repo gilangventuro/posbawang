@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import PageHeader from '@/components/PageHeader'
-import { hitungRingkasan, getData, setModalAwal, getSnapshots, simpanSnapshot, hapusSnapshot, exportDataJSON, importDataJSON } from '@/lib/store'
+import { hitungRingkasan, getData, setModalAwal, getSnapshots, simpanSnapshot, hapusSnapshot, exportDataJSON, importDataJSON, migrasiDariLocalStorage } from '@/lib/store'
 import { formatRupiah, formatKg, getTodayISO } from '@/lib/utils'
 import { RingkasanKeuangan, StockMasuk, JasaKupas, Penjualan, Reseller, SnapshotLaporan } from '@/lib/types'
 import { simpanInvoice, getSemuaInvoice, bukaInvoice, hapusInvoice, formatUkuran, Invoice } from '@/lib/invoices'
@@ -43,14 +43,16 @@ export default function LaporanPage() {
   const [snapshots, setSnapshots] = useState<SnapshotLaporan[]>([])
   const [snapForm, setSnapForm] = useState({ judul: '', catatan: '' })
   const [snapSaved, setSnapSaved] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const [migrasiPesan, setMigrasiPesan] = useState<string | null>(null)
 
   const { isAdmin } = useRole()
 
-  const loadData = () => {
-    const r = hitungRingkasan()
+  const loadData = async () => {
+    const r = await hitungRingkasan()
     setRingkasan(r)
 
-    const data = getData()
+    const data = await getData()
     setTotalTransaksi({
       beli: data.stockMasuk.length,
       kupas: data.jasaKupas.length,
@@ -92,11 +94,11 @@ export default function LaporanPage() {
     setRekapHarian(rekap)
   }
 
-  const handleSimpanModal = () => {
+  const handleSimpanModal = async () => {
     const nilai = parseFloat(inputModal.replace(/\./g, '').replace(',', '.'))
     if (!isNaN(nilai) && nilai >= 0) {
-      setModalAwal(nilai)
-      loadData()
+      await setModalAwal(nilai)
+      await loadData()
     }
     setEditModal(false)
     setInputModal('')
@@ -107,7 +109,10 @@ export default function LaporanPage() {
     setInvoices(list)
   }
 
-  const loadSnapshots = () => setSnapshots(getSnapshots())
+  const loadSnapshots = async () => {
+    const snaps = await getSnapshots()
+    setSnapshots(snaps)
+  }
 
   useEffect(() => {
     loadData()
@@ -137,37 +142,47 @@ export default function LaporanPage() {
     await loadInvoices()
   }
 
-  const handleSimpanSnapshot = () => {
+  const handleSimpanSnapshot = async () => {
     if (!snapForm.judul.trim()) return
-    simpanSnapshot(snapForm.judul, snapForm.catatan)
+    await simpanSnapshot(snapForm.judul, snapForm.catatan)
     setSnapForm({ judul: '', catatan: '' })
     setSnapSaved(true)
     setTimeout(() => setSnapSaved(false), 3000)
-    loadSnapshots()
+    await loadSnapshots()
   }
 
-  const handleHapusSnapshot = (id: string) => {
+  const handleHapusSnapshot = async (id: string) => {
     if (!confirm('Hapus rekap laporan ini?')) return
-    hapusSnapshot(id)
-    loadSnapshots()
+    await hapusSnapshot(id)
+    await loadSnapshots()
   }
 
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const json = ev.target?.result as string
-      if (importDataJSON(json)) {
-        loadData()
-        loadSnapshots()
-        alert('Data berhasil diimport!')
-      } else {
-        alert('File tidak valid atau rusak.')
-      }
+    const json = await file.text()
+    const ok = await importDataJSON(json)
+    if (ok) {
+      await Promise.all([loadData(), loadSnapshots()])
+      alert('Data berhasil diimport!')
+    } else {
+      alert('File tidak valid atau rusak.')
     }
-    reader.readAsText(file)
     e.target.value = ''
+  }
+
+  const handleMigrasi = async () => {
+    if (!confirm('Ini akan menghapus semua data Supabase dan menggantinya dengan data dari device ini. Lanjut?')) return
+    setMigrating(true)
+    setMigrasiPesan(null)
+    const result = await migrasiDariLocalStorage()
+    setMigrating(false)
+    if (result.error) {
+      setMigrasiPesan(`Gagal: ${result.error}`)
+    } else {
+      setMigrasiPesan(`Berhasil migrasi ${result.berhasil} transaksi ke Supabase!`)
+      await Promise.all([loadData(), loadSnapshots()])
+    }
   }
 
   const handleCetakPDF = () => {
@@ -770,7 +785,7 @@ export default function LaporanPage() {
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Download semua data sebagai file backup (.json) atau restore dari file backup sebelumnya.</p>
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={exportDataJSON}
+                onClick={() => exportDataJSON()}
                 className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -792,6 +807,33 @@ export default function LaporanPage() {
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
               ⚠ Import akan menggantikan semua data yang ada. Pastikan sudah backup sebelum import.
             </p>
+
+            {/* Migrasi dari localStorage */}
+            <div className="mt-5 pt-5 border-t border-slate-100 dark:border-slate-700">
+              <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Migrasi Data dari Device Ini</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Upload data lama (tersimpan di browser device ini) ke Supabase agar bisa diakses dari device lain.</p>
+              <button
+                onClick={handleMigrasi}
+                disabled={migrating}
+                className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition cursor-pointer"
+              >
+                {migrating ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                )}
+                {migrating ? 'Sedang migrasi...' : 'Migrasi dari Device Ini'}
+              </button>
+              {migrasiPesan && (
+                <p className={`text-xs mt-2 font-medium ${migrasiPesan.startsWith('Gagal') ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                  {migrasiPesan}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}

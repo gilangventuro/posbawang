@@ -17,8 +17,8 @@ export default function JasaKupasPage() {
 
   const { isAdmin } = useRole()
 
-  const loadData = () => {
-    const data = getData()
+  const loadData = async () => {
+    const data = await getData()
     setList([...data.jasaKupas].reverse())
     const totalBeli = data.stockMasuk.reduce((s, i) => s + i.berat_kg, 0)
     const totalKupas = data.jasaKupas.reduce((s, i) => s + i.berat_kg, 0)
@@ -31,11 +31,11 @@ export default function JasaKupasPage() {
   const isSendiri = form.tipe_kupas === 'sendiri'
   const totalBiaya = isSendiri ? 0 : (parseFloat(form.berat_kg) || 0) * (parseFloat(form.biaya_per_kg) || 0)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.berat_kg) return
     if (!isSendiri && !form.biaya_per_kg) return
-    tambahJasaKupas({
+    await tambahJasaKupas({
       tanggal: form.tanggal,
       tipe_kupas: form.tipe_kupas,
       berat_kg: parseFloat(form.berat_kg),
@@ -46,13 +46,13 @@ export default function JasaKupasPage() {
     setForm({ tanggal: getTodayISO(), tipe_kupas: form.tipe_kupas, berat_kg: '', biaya_per_kg: '', catatan: '' })
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
-    loadData()
+    await loadData()
   }
 
-  const handleHapus = (id: string) => {
+  const handleHapus = async (id: string) => {
     if (confirm('Hapus data ini?')) {
-      hapusJasaKupas(id)
-      loadData()
+      await hapusJasaKupas(id)
+      await loadData()
     }
   }
 

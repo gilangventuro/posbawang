@@ -25,7 +25,8 @@ export default function RiwayatPage() {
   const [cari, setCari] = useState('')
 
   useEffect(() => {
-    const data = getData()
+    const load = async () => {
+    const data = await getData()
     const semua: TransaksiItem[] = [
       ...data.stockMasuk.map(i => ({
         id: i.id,
@@ -74,6 +75,8 @@ export default function RiwayatPage() {
     ]
     semua.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     setItems(semua)
+    }
+    load()
   }, [])
 
   const filtered = items.filter(item => {

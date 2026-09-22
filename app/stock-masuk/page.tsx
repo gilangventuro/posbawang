@@ -20,7 +20,10 @@ export default function StockMasukPage() {
 
   const { isAdmin } = useRole()
 
-  const loadData = () => setList([...getData().stockMasuk].reverse())
+  const loadData = async () => {
+    const data = await getData()
+    setList([...data.stockMasuk].reverse())
+  }
 
   useEffect(() => { loadData() }, [])
 
@@ -39,7 +42,7 @@ export default function StockMasukPage() {
         notaId = invoice.id
       }
 
-      tambahStockMasuk({
+      await tambahStockMasuk({
         tanggal: form.tanggal,
         jenis_item: form.jenis_item,
         berat_kg: parseFloat(form.berat_kg),
@@ -54,16 +57,16 @@ export default function StockMasukPage() {
       if (fileInputRef.current) fileInputRef.current.value = ''
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
-      loadData()
+      await loadData()
     } finally {
       setUploading(false)
     }
   }
 
-  const handleHapus = (id: string) => {
+  const handleHapus = async (id: string) => {
     if (confirm('Hapus data ini?')) {
-      hapusStockMasuk(id)
-      loadData()
+      await hapusStockMasuk(id)
+      await loadData()
     }
   }
 

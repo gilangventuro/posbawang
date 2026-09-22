@@ -23,20 +23,23 @@ export default function ResellerPage() {
 
   const { isAdmin } = useRole()
 
-  const loadData = () => setList([...getData().reseller].reverse())
+  const loadData = async () => {
+    const data = await getData()
+    setList([...data.reseller].reverse())
+  }
 
   useEffect(() => { loadData() }, [])
 
   const totalFee = (parseFloat(beratKg) || 0) * (parseFloat(feePerKg) || 0)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const berat = parseFloat(beratKg)
     const fee = parseFloat(feePerKg)
     if (!namaReseller.trim() || !berat || berat <= 0 || !fee || fee <= 0) return
 
     setLoading(true)
-    tambahReseller({
+    await tambahReseller({
       tanggal,
       nama_reseller: namaReseller.trim(),
       berat_kg: berat,
@@ -44,7 +47,7 @@ export default function ResellerPage() {
       total_fee: berat * fee,
       catatan,
     })
-    loadData()
+    await loadData()
     setNamaReseller('')
     setBeratKg('')
     setFeePerKg('')
@@ -54,9 +57,9 @@ export default function ResellerPage() {
     setTimeout(() => setSukses(false), 3000)
   }
 
-  const handleHapus = (id: string) => {
-    hapusReseller(id)
-    loadData()
+  const handleHapus = async (id: string) => {
+    await hapusReseller(id)
+    await loadData()
   }
 
   const isValid = namaReseller.trim() && parseFloat(beratKg) > 0 && parseFloat(feePerKg) > 0

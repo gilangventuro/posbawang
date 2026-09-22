@@ -17,8 +17,8 @@ export default function PenjualanPage() {
 
   const { isAdmin } = useRole()
 
-  const loadData = () => {
-    const data = getData()
+  const loadData = async () => {
+    const data = await getData()
     setList([...data.penjualan].reverse())
     const totalBeliPutih = data.stockMasuk.filter(i => i.jenis_item === 'bawang_putih').reduce((s, i) => s + i.berat_kg, 0)
     const totalBeliMerah = data.stockMasuk.filter(i => i.jenis_item === 'bawang_merah').reduce((s, i) => s + i.berat_kg, 0)
@@ -37,10 +37,10 @@ export default function PenjualanPage() {
 
   const totalHarga = (parseFloat(form.berat_kg) || 0) * (parseFloat(form.harga_jual_per_kg) || 0)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.berat_kg || !form.harga_jual_per_kg) return
-    tambahPenjualan({
+    await tambahPenjualan({
       tanggal: form.tanggal,
       jenis_item: form.jenis_item,
       jenis: form.jenis,
@@ -52,13 +52,13 @@ export default function PenjualanPage() {
     setForm({ tanggal: getTodayISO(), jenis_item: form.jenis_item, jenis: 'tidak_kupas', berat_kg: '', harga_jual_per_kg: '', catatan: '' })
     setSuccess(true)
     setTimeout(() => setSuccess(false), 3000)
-    loadData()
+    await loadData()
   }
 
-  const handleHapus = (id: string) => {
+  const handleHapus = async (id: string) => {
     if (confirm('Hapus data ini?')) {
-      hapusPenjualan(id)
-      loadData()
+      await hapusPenjualan(id)
+      await loadData()
     }
   }
 
