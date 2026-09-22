@@ -1,6 +1,6 @@
 'use client'
 
-import { AppData, StockMasuk, JasaKupas, Penjualan, Reseller, RingkasanKeuangan, SnapshotLaporan } from './types'
+import { AppData, StockMasuk, JasaKupas, Penjualan, Reseller, Hutang, CicilanHutang, RingkasanKeuangan, SnapshotLaporan } from './types'
 
 const STORAGE_KEY = 'posbawang_data'
 const SNAPSHOT_KEY = 'posbawang_snapshots'
@@ -10,6 +10,8 @@ const defaultData: AppData = {
   jasaKupas: [],
   penjualan: [],
   reseller: [],
+  hutang: [],
+  cicilan: [],
   modalAwal: 0,
 }
 
@@ -99,6 +101,49 @@ export function setModalAwal(nominal: number) {
   saveData(data)
 }
 
+// ── Hutang ───────────────────────────────────────────────────────────────────
+
+export function getHutang(): Hutang[] {
+  return getData().hutang ?? []
+}
+
+export function tambahHutang(item: Omit<Hutang, 'id' | 'createdAt'>) {
+  const data = getData()
+  const newItem: Hutang = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
+  if (!data.hutang) data.hutang = []
+  data.hutang.push(newItem)
+  saveData(data)
+  return newItem
+}
+
+export function hapusHutang(id: string) {
+  const data = getData()
+  data.hutang = (data.hutang ?? []).filter(h => h.id !== id)
+  data.cicilan = (data.cicilan ?? []).filter(c => c.hutangId !== id)
+  saveData(data)
+}
+
+// ── Cicilan ──────────────────────────────────────────────────────────────────
+
+export function getCicilan(): CicilanHutang[] {
+  return getData().cicilan ?? []
+}
+
+export function tambahCicilan(item: Omit<CicilanHutang, 'id' | 'createdAt'>) {
+  const data = getData()
+  const newItem: CicilanHutang = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() }
+  if (!data.cicilan) data.cicilan = []
+  data.cicilan.push(newItem)
+  saveData(data)
+  return newItem
+}
+
+export function hapusCicilan(id: string) {
+  const data = getData()
+  data.cicilan = (data.cicilan ?? []).filter(c => c.id !== id)
+  saveData(data)
+}
+
 // ── Snapshot Laporan ────────────────────────────────────────────────────────
 
 export function getSnapshots(): SnapshotLaporan[] {
@@ -177,6 +222,8 @@ export function hitungRingkasan(): RingkasanKeuangan {
   const totalPengeluaran = totalPembelian + totalJasaKupas + totalReseller
   const totalPendapatan = data.penjualan.reduce((s, i) => s + i.total_harga, 0)
   const keuntungan = totalPendapatan - totalPengeluaran
+  const totalCicilan = (data.cicilan ?? []).reduce((s, i) => s + i.jumlahBayar, 0)
+  const keuntunganSetelahHutang = keuntungan - totalCicilan
 
   const totalBeliKg = data.stockMasuk.reduce((s, i) => s + i.berat_kg, 0)
   const totalKupasKg = data.jasaKupas.reduce((s, i) => s + i.berat_kg, 0)
@@ -187,7 +234,7 @@ export function hitungRingkasan(): RingkasanKeuangan {
   const stokBawangKupas = Math.max(0, totalKupasKg - totalJualKupasKg)
 
   const modalAwal = data.modalAwal ?? 0
-  const saldoAkhir = modalAwal + keuntungan
+  const saldoAkhir = modalAwal + keuntunganSetelahHutang
 
-  return { modalAwal, totalPembelian, totalJasaKupas, totalReseller, totalPengeluaran, totalPendapatan, keuntungan, saldoAkhir, stokBawangMentah, stokBawangKupas }
+  return { modalAwal, totalPembelian, totalJasaKupas, totalReseller, totalPengeluaran, totalPendapatan, keuntungan, totalCicilan, keuntunganSetelahHutang, saldoAkhir, stokBawangMentah, stokBawangKupas }
 }

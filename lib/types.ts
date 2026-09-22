@@ -48,11 +48,31 @@ export interface Reseller {
   createdAt: string
 }
 
+export interface Hutang {
+  id: string
+  judul: string
+  jumlahPokok: number
+  tanggal: string
+  catatan: string
+  createdAt: string
+}
+
+export interface CicilanHutang {
+  id: string
+  hutangId: string
+  tanggal: string
+  jumlahBayar: number
+  catatan: string
+  createdAt: string
+}
+
 export interface AppData {
   stockMasuk: StockMasuk[]
   jasaKupas: JasaKupas[]
   penjualan: Penjualan[]
   reseller: Reseller[]
+  hutang: Hutang[]
+  cicilan: CicilanHutang[]
   modalAwal: number
 }
 
@@ -64,6 +84,8 @@ export interface RingkasanKeuangan {
   totalPengeluaran: number
   totalPendapatan: number
   keuntungan: number
+  totalCicilan: number
+  keuntunganSetelahHutang: number
   saldoAkhir: number
   stokBawangMentah: number
   stokBawangKupas: number

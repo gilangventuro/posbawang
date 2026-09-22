@@ -178,6 +178,8 @@ export default function LaporanPage() {
   if (!ringkasan) return null
 
   const isUntung = ringkasan.keuntungan >= 0
+  const isUntungBersih = ringkasan.keuntunganSetelahHutang >= 0
+  const adaCicilan = ringkasan.totalCicilan > 0
   const marginPersen = ringkasan.totalPendapatan > 0
     ? ((ringkasan.keuntungan / ringkasan.totalPendapatan) * 100).toFixed(1)
     : '0'
@@ -198,19 +200,38 @@ export default function LaporanPage() {
       </PageHeader>
 
       {/* Keuntungan bersih - hero card */}
-      <div className={`rounded-2xl border p-6 mb-6 ${isUntung ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800' : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'}`}>
+      <div className={`rounded-2xl border p-6 mb-6 ${isUntungBersih ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800' : 'bg-red-50 border-red-200 dark:bg-red-900/30 dark:border-red-800'}`}>
         <div className="flex items-center justify-between">
-          <div>
-            <p className={`text-xs font-semibold uppercase tracking-wider ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>Keuntungan Bersih</p>
-            <p className={`text-4xl font-bold mt-1 ${isUntung ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-700 dark:text-red-300'}`}>
-              {formatRupiah(ringkasan.keuntungan)}
-            </p>
-            <p className={`text-sm mt-2 ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
-              Margin: <span className="font-bold">{marginPersen}%</span> dari total pendapatan
-            </p>
+          <div className="flex-1">
+            {adaCicilan ? (
+              <>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>Keuntungan Usaha</p>
+                <p className={`text-2xl font-bold mt-0.5 ${isUntung ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600'}`}>{formatRupiah(ringkasan.keuntungan)}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Cicilan Hutang:</span>
+                  <span className="text-sm font-semibold text-red-500">− {formatRupiah(ringkasan.totalCicilan)}</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-black/10 dark:border-white/10">
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${isUntungBersih ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>Keuntungan Bersih Setelah Hutang</p>
+                  <p className={`text-4xl font-bold mt-0.5 ${isUntungBersih ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-700 dark:text-red-300'}`}>
+                    {formatRupiah(ringkasan.keuntunganSetelahHutang)}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className={`text-xs font-semibold uppercase tracking-wider ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>Keuntungan Bersih</p>
+                <p className={`text-4xl font-bold mt-1 ${isUntung ? 'text-emerald-800 dark:text-emerald-200' : 'text-red-700 dark:text-red-300'}`}>
+                  {formatRupiah(ringkasan.keuntungan)}
+                </p>
+                <p className={`text-sm mt-2 ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
+                  Margin: <span className="font-bold">{marginPersen}%</span> dari total pendapatan
+                </p>
+              </>
+            )}
           </div>
-          <div className={`text-5xl opacity-20 ${isUntung ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-            {isUntung ? '↗' : '↘'}
+          <div className={`text-5xl opacity-20 ${isUntungBersih ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+            {isUntungBersih ? '↗' : '↘'}
           </div>
         </div>
       </div>
@@ -368,6 +389,30 @@ export default function LaporanPage() {
           </div>
         )}
       </div>
+
+      {/* Cicilan Pinjaman */}
+      {adaCicilan && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-orange-200 dark:border-orange-900/50 p-5 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-white">Cicilan Pinjaman</h3>
+            <a href="/pinjaman" className="text-xs text-[#B04B87] hover:underline font-medium">Lihat detail →</a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-3">
+              <p className="text-xs text-orange-600 dark:text-orange-400 font-semibold uppercase tracking-wide">Keuntungan Usaha</p>
+              <p className="text-lg font-bold text-orange-800 dark:text-orange-200 mt-1">{formatRupiah(ringkasan.keuntungan)}</p>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-xl p-3">
+              <p className="text-xs text-red-500 font-semibold uppercase tracking-wide">Dipotong Cicilan</p>
+              <p className="text-lg font-bold text-red-600 dark:text-red-400 mt-1">− {formatRupiah(ringkasan.totalCicilan)}</p>
+            </div>
+            <div className={`rounded-xl p-3 ${isUntungBersih ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wide ${isUntungBersih ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500'}`}>Keuntungan Bersih</p>
+              <p className={`text-lg font-bold mt-1 ${isUntungBersih ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-600 dark:text-red-400'}`}>{formatRupiah(ringkasan.keuntunganSetelahHutang)}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Ringkasan tabel */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden mb-6">
