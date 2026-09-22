@@ -68,13 +68,6 @@ export default function Sidebar() {
           <div className="flex flex-col items-center gap-1 flex-1">
             <Image src="/logo.png" alt="Rumah Bawang" width={160} height={72} className="object-contain" priority />
             <p className="text-white/50 text-xs">Manajemen Stok</p>
-            <span className={`mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-              isViewer
-                ? 'bg-yellow-400/20 text-yellow-200 border border-yellow-400/30'
-                : 'bg-white/20 text-white/90 border border-white/20'
-            }`}>
-              {role === 'admin' ? 'Admin' : 'Viewer'}
-            </span>
           </div>
           {/* Close button — mobile only */}
           <button
